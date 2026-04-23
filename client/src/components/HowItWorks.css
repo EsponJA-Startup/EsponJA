@@ -1,0 +1,83 @@
+.how-it-works {
+  background-color: var(--bg-secondary);
+}
+
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  margin-top: 4rem;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .steps-container {
+    flex-direction: row;
+    gap: 2rem;
+  }
+}
+
+.step-card {
+  flex: 1;
+  position: relative;
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.step-number {
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3rem;
+  height: 3rem;
+  background-color: var(--accent);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  border: 4px solid var(--bg-secondary);
+}
+
+.step-icon {
+  margin: 2rem auto 1rem auto;
+  color: var(--primary);
+  opacity: 0.8;
+}
+
+.step-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.step-card p {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Connecting Line */
+@media (min-width: 768px) {
+  .step-card:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -1rem;
+    width: 2rem;
+    height: 2px;
+    background-color: var(--border-color);
+    z-index: 0;
+  }
+}

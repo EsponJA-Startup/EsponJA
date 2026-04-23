@@ -1,0 +1,102 @@
+.cta-section {
+  padding: 6rem 0;
+  background-color: var(--primary);
+  color: var(--white);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(251, 192, 45, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+  z-index: 0;
+}
+
+.cta-container {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.cta-section h2 {
+  color: var(--white);
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cta-section p {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 3rem;
+}
+
+.waitlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .waitlist-form {
+    flex-direction: row;
+  }
+}
+
+.waitlist-input {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  font-size: 1rem;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.waitlist-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(251, 192, 45, 0.2);
+}
+
+.waitlist-btn {
+  padding: 1rem 2rem;
+  border-radius: var(--radius-full);
+  background-color: var(--accent);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 1rem;
+  white-space: nowrap;
+  transition: all var(--transition-normal);
+}
+
+.waitlist-btn:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(251, 192, 45, 0.3);
+}
+
+.form-success {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.form-success h4 {
+  color: var(--accent);
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-success p {
+  font-size: 1rem;
+  margin: 0;
+}
