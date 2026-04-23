@@ -1,0 +1,158 @@
+.client-dashboard {
+  padding-top: 80px; /* offset for navbar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-hero {
+  padding: 4rem 0;
+  background-color: var(--bg-secondary);
+}
+
+.dashboard-hero-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  text-align: center;
+}
+
+@media (min-width: 992px) {
+  .dashboard-hero-container {
+    flex-direction: row;
+    text-align: left;
+  }
+  .dashboard-hero-content {
+    flex: 1;
+    max-width: 50%;
+  }
+  .dashboard-carousel {
+    flex: 1;
+    max-width: 50%;
+  }
+}
+
+.dashboard-hero-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-hero-content .highlight {
+  color: var(--accent);
+}
+
+.dashboard-hero-content p {
+  font-size: 1.125rem;
+  color: var(--text-light);
+  margin-bottom: 2rem;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .dashboard-actions {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 992px) {
+  .dashboard-actions {
+    justify-content: flex-start;
+  }
+}
+
+.dashboard-carousel {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  background-color: var(--white);
+}
+
+.carousel-container {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  position: relative;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 3rem 1rem 1rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  color: var(--white);
+  text-align: left;
+}
+
+.carousel-caption h3 {
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.carousel-controls {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 10;
+}
+
+.carousel-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+  border-radius: var(--radius-full);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  backdrop-filter: blur(4px);
+  transition: background var(--transition-fast);
+}
+
+.carousel-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.carousel-indicators {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.indicator.active {
+  background: var(--accent);
+  transform: scale(1.2);
+}

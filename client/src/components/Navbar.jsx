@@ -31,13 +31,13 @@ export default function Navbar() {
             <a href="#how-it-works" className="nav-link">Como Funciona</a>
             <a href="#features" className="nav-link">Segurança</a>
             <a href="#testimonials" className="nav-link">Avaliações</a>
+            <a href="#cta" className="nav-link">Lista de Espera</a>
           </div>
         )}
 
         <div className="nav-actions">
           <Link to="/register?type=provider" className="nav-link hide-mobile">Seja um Profissional</Link>
-          <Link to="/login" className="nav-link hide-mobile">Entrar</Link>
-          <Link to="/register?type=customer" className="btn btn-primary">Cadastrar</Link>
+          <Link to="/client-dashboard" className="btn btn-primary">Sou um cliente</Link>
           
           <button 
             className="mobile-menu-btn" 
