@@ -52,7 +52,7 @@ export default function ClientDashboard() {
             <h1>Bem-vindo ao seu <span className="highlight">Painel de Cliente</span></h1>
             <p>Descubra os melhores profissionais de limpeza para a sua necessidade. Junte-se a nós para ter acesso completo a agendamentos, avaliações e muito mais.</p>
             <div className="dashboard-actions">
-              <Link to="/login" className="btn btn-secondary">Entrar na minha conta</Link>
+              <Link to="/client/home" className="btn btn-secondary">Entrar na minha conta</Link>
               <Link to="/register?type=customer" className="btn btn-primary">Cadastrar-se agora</Link>
             </div>
           </div>

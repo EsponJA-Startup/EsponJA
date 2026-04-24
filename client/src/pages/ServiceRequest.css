@@ -1,0 +1,83 @@
+.service-request-page {
+  padding-top: 80px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-secondary);
+}
+
+.request-main {
+  flex: 1;
+  padding: 3rem 1.5rem;
+  max-width: 800px;
+}
+
+.request-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.request-header h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.request-header p {
+  color: var(--text-light);
+}
+
+.request-form {
+  padding: 2rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-section h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.form-row {
+  margin-bottom: 1.5rem;
+}
+
+.form-row.split {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row.split .form-group {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 640px) {
+  .form-row.split {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
