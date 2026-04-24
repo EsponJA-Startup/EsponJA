@@ -21,8 +21,10 @@ export default function Login() {
           <p className="auth-subtitle">Acesse sua conta do EsponJÁ</p>
 
           {submitted ? (
-            <div className="mock-alert">
-              <strong>Simulação do MVP:</strong> Em um ambiente de produção, este login redirecionaria você para o seu Dashboard seguro. No momento, gravamos seu interesse!
+            <div className="mock-alert" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <strong>Simulação do MVP:</strong> Em um ambiente de produção, este login redirecionaria você para o seu Dashboard seguro. Para testar o protótipo, acesse:
+              <Link to="/client/home" className="btn btn-primary" style={{ textAlign: 'center' }}>Painel do Cliente</Link>
+              <Link to="/provider/home" className="btn btn-secondary" style={{ textAlign: 'center' }}>Painel do Profissional</Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>

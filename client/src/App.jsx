@@ -4,6 +4,9 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ClientDashboard from './pages/ClientDashboard';
+import ClientHome from './pages/ClientHome';
+import ProviderHome from './pages/ProviderHome';
+import ServiceRequest from './pages/ServiceRequest';
 import './App.css'; 
 
 function App() {
@@ -15,6 +18,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/client-dashboard" element={<ClientDashboard />} />
+          <Route path="/client/home" element={<ClientHome />} />
+          <Route path="/provider/home" element={<ProviderHome />} />
+          <Route path="/client/request-service" element={<ServiceRequest />} />
         </Routes>
       </div>
     </BrowserRouter>
