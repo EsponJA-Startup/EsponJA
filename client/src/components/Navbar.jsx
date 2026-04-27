@@ -36,8 +36,7 @@ export default function Navbar() {
         )}
 
         <div className="nav-actions">
-          <Link to="/register?type=provider" className="nav-link hide-mobile">Seja um Profissional</Link>
-          <Link to="/client-dashboard" className="btn btn-primary">Sou um cliente</Link>
+          <a href="#cta" className="btn btn-primary">Entrar na Fila</a>
           
           <button 
             className="mobile-menu-btn" 
