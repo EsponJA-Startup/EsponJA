@@ -167,6 +167,19 @@ The frontend architecture has been prepared to seamlessly communicate with the u
 3. **CORS & Development Proxying**: The Vite configuration (`vite.config.js`) is now set up to proxy all requests starting with `/api` directly to `http://localhost:8000`. This effortlessly sidesteps Cross-Origin Resource Sharing (CORS) issues during local development between the React frontend and the FastAPI server.
 4. **State & Error Handling Foundation**: The `axios` interceptors provide a solid groundwork for implementing robust loading states, success notifications, and comprehensive error handling once the frontend connects to live endpoints (e.g., Waitlist registration or User Login).
 
+### ⚙️ MVP Backend Integration (FastAPI + SQLModel)
+We have successfully built the initial bridge between our React frontend and the FastAPI backend, utilizing a local SQLite database for the MVP phase.
+
+1. **Authentication (Login & Register)**:
+   - The `Client` and `Professional` models were updated to securely hash and store passwords using `passlib[bcrypt]`.
+   - The `Register.jsx` and `Login.jsx` components now communicate directly with `POST /api/auth/register` and `POST /api/auth/login`. This effectively saves new users to the database and verifies credentials upon login, dynamically routing them to their respective dashboards.
+   > [!NOTE]
+   > **Future Implementation Note (JWT Auth)**: Currently, the backend uses a simulated session response (returning the role and user ID). Before launching to production, we must implement robust **JWT-based authentication** (JSON Web Tokens) to secure protected routes.
+
+2. **Waitlist (Lista de Espera)**:
+   - A dedicated `Waitlist` table was created in `models.py` to capture early-adopter interest.
+   - The waitlist form (`CTA.jsx`) has been upgraded to not only capture the user's `email` but also their intended role (`customer` or `provider`), sending data to `POST /api/waitlist`.
+
 ---
 
 Happy coding! 🧽✨

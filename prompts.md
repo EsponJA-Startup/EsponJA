@@ -76,7 +76,7 @@
 
 Please generate the complete, ready-to-use models.py code based on these specifications.
 
-5. Read src/README first. Then do the following setup:
+5. Read client/README first. Then do the following setup:
 
     Create .env and .env.example with VITE_API_URL=/api
 
@@ -88,5 +88,22 @@ Please generate the complete, ready-to-use models.py code based on these specifi
 
 Goal: Frontend ready to connect to a FastAPI backend with no CORS issues during development.
 
-6. 
+6. Read again client/README. Then implement the following backend setup and frontend integration:
+
+    Initialize SQLite database and create main.py as FastAPI entry point
+
+    Add password hashing using bcrypt to user models
+
+    Implement POST /api/auth/register and POST /api/auth/login endpoints
+
+    Create a Waitlist model; update CTA.jsx to capture "Contratar" (Customer) or "Trabalhar" (Provider)
+
+    Connect Login.jsx and Register.jsx to FastAPI endpoints with error handling
+
+    Document backend setup in client/README.md with a note about future JWT authentication upgrade
+
+Goal: Fully connected FastAPI backend + React frontend with auth and waitlist functionality.
+
+7. 
+
 
