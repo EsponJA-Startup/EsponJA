@@ -104,4 +104,6 @@ Goal: Frontend ready to connect to a FastAPI backend with no CORS issues during 
 
 Goal: Fully connected FastAPI backend + React frontend with auth and waitlist functionality.
 
+7. 
+
 
