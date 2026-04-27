@@ -159,13 +159,13 @@ esponja-platform/
 └── README.md
 ```
 
-### 🔌 Preparing the Frontend for the API
-We won't write the backend code just yet, but here are the architectural changes we will plan for the React frontend to communicate with FastAPI:
+### 🔌 Frontend API Integration 
+The frontend architecture has been prepared to seamlessly communicate with the upcoming FastAPI backend. Here are the core integrations implemented:
 
-1. **Environment Variables**: We will introduce `.env` files (e.g., `VITE_API_URL=http://localhost:8000`). This ensures the frontend knows where to send requests, allowing seamless transitions between local development, staging, and production.
-2. **API Service Layer**: Instead of scattering `fetch` or `axios` calls directly inside our UI components, we will create a `src/services/` directory. This creates a clean boundary: components handle the UI, and services handle the data fetching.
-3. **CORS & Proxying**: We will configure Vite's `vite.config.js` to proxy API requests during development to avoid Cross-Origin Resource Sharing (CORS) errors between `localhost:5173` (React) and `localhost:8000` (FastAPI).
-4. **State & Error Handling**: We will design robust loading states, success messages, and error boundaries for when the frontend is waiting for the FastAPI server to respond (e.g., during Waitlist registration or User Login).
+1. **Environment Variables**: We introduced `.env` and `.env.example` files. This configuration explicitly manages environment-specific variables like `VITE_API_URL`, allowing smooth transitions across development, staging, and production environments.
+2. **Centralized API Service Layer**: `axios` has been integrated to handle HTTP requests. We've established a dedicated service layer in `src/services/api.js`. This creates a robust separation of concerns where UI components handle rendering and the service layer manages data fetching, default headers, and global interceptors (e.g., handling 401 Unauthorized errors).
+3. **CORS & Development Proxying**: The Vite configuration (`vite.config.js`) is now set up to proxy all requests starting with `/api` directly to `http://localhost:8000`. This effortlessly sidesteps Cross-Origin Resource Sharing (CORS) issues during local development between the React frontend and the FastAPI server.
+4. **State & Error Handling Foundation**: The `axios` interceptors provide a solid groundwork for implementing robust loading states, success notifications, and comprehensive error handling once the frontend connects to live endpoints (e.g., Waitlist registration or User Login).
 
 ---
 

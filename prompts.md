@@ -76,4 +76,17 @@
 
 Please generate the complete, ready-to-use models.py code based on these specifications.
 
-5.
+5. Read src/README first. Then do the following setup:
+
+    Create .env and .env.example with VITE_API_URL=/api
+
+    Install axios and build src/services/api.js with a configured instance, default headers, global interceptors, and 401 error handling
+
+    Update vite.config.js to proxy /api requests to http://localhost:8000
+
+    Rewrite the "Preparing the Frontend for the API" section in client/README.md to document the completed architecture
+
+Goal: Frontend ready to connect to a FastAPI backend with no CORS issues during development.
+
+6. 
+
