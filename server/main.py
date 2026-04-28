@@ -16,8 +16,7 @@ def get_password_hash(password: str) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # create_db_and_tables() # <-- Comente temporariamente
-    print("API subiu sem bloquear no banco Neon!")
+    create_db_and_tables()
     yield
 
 app = FastAPI(lifespan=lifespan)

@@ -4,8 +4,9 @@ import axios from 'axios';
 //const API_URL = import.meta.env.VITE_API_URL || '/api';
 const API_URL = 'https://esponja-backend.onrender.com/api';
 // Create an Axios instance
+
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: 'https://esponja.onrender.com/api', // Sem o "-backend"
   headers: {
     'Content-Type': 'application/json',
   },
