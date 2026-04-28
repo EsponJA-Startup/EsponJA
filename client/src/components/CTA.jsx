@@ -12,6 +12,16 @@ export default function CTA() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    
+    // Validate phone if provided
+    if (phone) {
+      const phoneDigits = phone.replace(/\D/g, '');
+      if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+        setError("Por favor, insira um número de WhatsApp válido com DDD.");
+        return;
+      }
+    }
+
     if (email) {
       try {
         await api.post('/waitlist', { email, phone, intended_role: intendedRole });
@@ -64,7 +74,7 @@ export default function CTA() {
                 placeholder="Digite seu WhatsApp" 
                 className="waitlist-input"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(e.target.value.replace(/[^0-9\+\-\(\)\s]/g, ''))}
               />
               <button type="submit" className="waitlist-btn">Entrar na Fila</button>
             </form>
