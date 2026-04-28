@@ -4,3 +4,4 @@ sqlmodel==0.0.16
 pydantic==2.6.4
 bcrypt==4.1.2
 python-multipart==0.0.9
+psycopg2-binary
