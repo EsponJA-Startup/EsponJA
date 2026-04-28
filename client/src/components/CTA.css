@@ -25,6 +25,12 @@
   margin: 0 auto;
 }
 
+@media (min-width: 640px) {
+  .cta-container {
+    max-width: 1000px;
+  }
+}
+
 .cta-section h2 {
   color: var(--white);
   font-size: 2.5rem;
@@ -48,6 +54,10 @@
 @media (min-width: 640px) {
   .waitlist-form {
     flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    flex-wrap: wrap;
   }
 }
 
@@ -59,6 +69,12 @@
   font-size: 1rem;
   outline: none;
   transition: all var(--transition-fast);
+  flex: 1 1 200px;
+  max-width: 320px;
+}
+
+select.waitlist-input {
+  flex: 0 0 150px;
 }
 
 .waitlist-input:focus {
@@ -75,6 +91,7 @@
   font-size: 1rem;
   white-space: nowrap;
   transition: all var(--transition-normal);
+  flex: 0 0 auto;
 }
 
 .waitlist-btn:hover {

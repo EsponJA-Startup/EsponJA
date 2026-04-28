@@ -67,5 +67,6 @@ class ServiceRequest(SQLModel, table=True):
 class Waitlist(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     email: str
+    phone: str | None = None
     intended_role: str | None = None  # "customer" or "provider"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
