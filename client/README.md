@@ -182,4 +182,39 @@ We have successfully built the initial bridge between our React frontend and the
 
 ---
 
+## 🚀 Development and Integration History (EsponJÁ MVP)
+
+## 1. Frontend Foundation (UI and UX)
+* **Chosen Stack:** We built the application using **React + Vite** to ensure fast and optimized development.
+* **Design System:** We implemented a color palette focused on trust and energy (blue and yellow/gold), using custom CSS and `lucide-react` icons.
+* **Pages and Routing:** We created routes with `react-router-dom` for the Landing Page (Hero, How It Works, Features, Testimonials), Authentication pages (Login and Register), and specific Dashboards (Client Home and Provider Home).
+* **API Service:** We centralized HTTP calls using `axios`, setting up interceptors and error handling (e.g., 401 Unauthorized), and configured a proxy in `vite.config.js` to avoid CORS issues in local development.
+
+## 2. Backend Foundation (Logic and Database)
+* **Chosen Stack:** We developed the API with **Python 3.11 and FastAPI**, taking advantage of its strong typing and automatic documentation.
+* **Data Modeling (SQLModel):** We structured the initial database (first in SQLite, then migrated to PostgreSQL) with the main tables:
+  * `Client`: Client data and contacts.
+  * `Professional`: Profile, Trust Score, badges, and wallet of the professionals.
+  * `ServiceRequest`: The central table for matching clients and professionals.
+  * `Waitlist`: To capture interested leads for the platform.
+* **MVP Authentication:** We implemented password hashing using `bcrypt` and created the `POST /api/auth/register` and `POST /api/auth/login` endpoints.
+
+## 3. Cloud Infrastructure and Deployment (Production)
+To launch the MVP and make it accessible to the public, we separated the application into three cloud services:
+
+* **Database (Neon.tech):** We migrated from local SQLite to Serverless PostgreSQL on Neon. This provided a robust cloud database that automatically scales (scale-to-zero) when not in use.
+* **Backend (Render):** We deployed the FastAPI API as a free *Web Service* on Render. We configured the `DATABASE_URL` variable to connect with Neon and adjusted the startup command (`uvicorn main:app --host 0.0.0.0 --port 10000`).
+* **Frontend (Vercel):** We hosted the React app on Vercel, configuring the `VITE_API_URL` environment variable to point to the production URL on Render (`https://esponja.onrender.com/api`).
+
+## 4. DevOps Conflict Resolution (Troubleshooting)
+During the cloud-to-cloud integration, we faced and resolved crucial infrastructure challenges:
+* **CORS Conflict and 404 Status:** The Frontend (Vercel) had its preflight (`OPTIONS`) requests blocked. We diagnosed that:
+  1. There was a strict security inconsistency: using `allow_credentials=True` with `allow_origins=["*"]` caused a silent crash in Uvicorn during startup. We fixed this by setting `allow_credentials=False`.
+  2. The Frontend base URL was pointing to an incorrect subdomain (`esponja-backend.onrender.com` instead of `esponja.onrender.com`), which resulted in a 404 error (route not found) even before reaching the API.
+* **Database Connection Timeout:** We verified Neon's behavior (which enters sleep mode) during FastAPI's `lifespan`, ensuring the connection time wouldn't exceed Render's health check limit during deployment.
+
+## 5. Next Steps (Roadmap)
+* **Robust Authentication:** Replace the current session simulation with real **JWT (JSON Web Tokens)** authentication to protect backend routes.
+* **Real Data Integration:** Replace the mocked data in the Client and Professional dashboards with GET requests (e.g., list pending services, schedule, etc.) from the Neon database.
+
 Happy coding! 🧽✨

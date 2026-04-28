@@ -52,16 +52,17 @@ class WaitlistRequest(BaseModel):
 def register(request: RegisterRequest, session: Session = Depends(get_session)):
     full_name = f"{request.name} {request.last_name}".strip()
     hashed_pwd = get_password_hash(request.password)
+    email_lower = request.email.lower()
     
     if request.role == "provider":
         # Check if email exists
-        existing = session.exec(select(Professional).where(Professional.email == request.email)).first()
+        existing = session.exec(select(Professional).where(Professional.email == email_lower)).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
             
         new_user = Professional(
             name=full_name,
-            email=request.email,
+            email=email_lower,
             whatsapp_number=request.whatsapp_number,
             password=hashed_pwd,
             specialty=request.specialty
@@ -69,13 +70,13 @@ def register(request: RegisterRequest, session: Session = Depends(get_session)):
         session.add(new_user)
     else:
         # Check if email exists
-        existing = session.exec(select(Client).where(Client.email == request.email)).first()
+        existing = session.exec(select(Client).where(Client.email == email_lower)).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
             
         new_user = Client(
             name=full_name,
-            email=request.email,
+            email=email_lower,
             whatsapp_number=request.whatsapp_number,
             password=hashed_pwd
         )
@@ -88,13 +89,15 @@ def register(request: RegisterRequest, session: Session = Depends(get_session)):
 
 @app.post("/api/auth/login")
 def login(request: LoginRequest, session: Session = Depends(get_session)):
+    email_lower = request.email.lower()
+    
     # Check clients first
-    client = session.exec(select(Client).where(Client.email == request.email)).first()
+    client = session.exec(select(Client).where(Client.email == email_lower)).first()
     if client and verify_password(request.password, client.password):
         return {"message": "Login successful", "role": "customer", "user_id": str(client.id)}
         
     # Check professionals
-    professional = session.exec(select(Professional).where(Professional.email == request.email)).first()
+    professional = session.exec(select(Professional).where(Professional.email == email_lower)).first()
     if professional and verify_password(request.password, professional.password):
         return {"message": "Login successful", "role": "provider", "user_id": str(professional.id)}
         
@@ -102,11 +105,21 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
 
 @app.post("/api/waitlist")
 def join_waitlist(request: WaitlistRequest, session: Session = Depends(get_session)):
-    existing = session.exec(select(Waitlist).where(Waitlist.email == request.email)).first()
-    if existing:
+    email_lower = request.email.lower()
+    
+    existing_waitlist = session.exec(select(Waitlist).where(Waitlist.email == email_lower)).first()
+    if existing_waitlist:
         raise HTTPException(status_code=400, detail="Email already on waitlist")
         
-    entry = Waitlist(email=request.email, intended_role=request.intended_role)
+    existing_client = session.exec(select(Client).where(Client.email == email_lower)).first()
+    if existing_client:
+        raise HTTPException(status_code=400, detail="Email already registered as Client")
+        
+    existing_professional = session.exec(select(Professional).where(Professional.email == email_lower)).first()
+    if existing_professional:
+        raise HTTPException(status_code=400, detail="Email already registered as Professional")
+        
+    entry = Waitlist(email=email_lower, intended_role=request.intended_role)
     session.add(entry)
     session.commit()
     
