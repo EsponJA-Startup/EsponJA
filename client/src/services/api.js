@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // The base URL can be defined in .env. It defaults to /api when using the Vite proxy.
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-
+//const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = 'https://esponja-backend.onrender.com/api';
 // Create an Axios instance
 const api = axios.create({
   baseURL: API_URL,
