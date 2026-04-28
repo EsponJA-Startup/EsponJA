@@ -38,27 +38,29 @@ export default function CTA() {
             <p>Fique de olho na sua caixa de entrada. Avisaremos quando o EsponJÁ estiver disponível na sua área.</p>
           </div>
         ) : (
-          <form className="waitlist-form" onSubmit={handleSubmit}>
-            <select 
-              className="waitlist-input"
-              value={intendedRole}
-              onChange={(e) => setIntendedRole(e.target.value)}
-              style={{ width: '150px', backgroundColor: 'white' }}
-            >
-              <option value="customer">Contratar</option>
-              <option value="provider">Trabalhar</option>
-            </select>
-            <input 
-              type="email" 
-              placeholder="Digite seu endereço de e-mail" 
-              className="waitlist-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-            />
-            <button type="submit" className="waitlist-btn">Entrar na Fila</button>
-            {error && <p style={{ color: 'white', marginTop: '10px', fontSize: '14px', width: '100%', textAlign: 'center' }}>{error}</p>}
-          </form>
+          <div className="waitlist-form-container">
+            <form className="waitlist-form" onSubmit={handleSubmit}>
+              <select 
+                className="waitlist-input"
+                value={intendedRole}
+                onChange={(e) => setIntendedRole(e.target.value)}
+                style={{ width: '150px', backgroundColor: 'white' }}
+              >
+                <option value="customer">Contratar</option>
+                <option value="provider">Trabalhar</option>
+              </select>
+              <input 
+                type="email" 
+                placeholder="Digite seu endereço de e-mail" 
+                className="waitlist-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
+              <button type="submit" className="waitlist-btn">Entrar na Fila</button>
+            </form>
+            {error && <p className="waitlist-error" style={{ color: '#ffb3b3', marginTop: '1rem', fontSize: '1rem', textAlign: 'center', fontWeight: '500' }}>{error}</p>}
+          </div>
         )}
       </div>
     </section>
