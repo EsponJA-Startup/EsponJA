@@ -20,6 +20,12 @@ export default function Login() {
     try {
       const response = await api.post('/auth/login', { email, password });
       
+      // Save to localStorage
+      if (response.data.user_id) {
+        localStorage.setItem('user_id', response.data.user_id);
+      }
+      localStorage.setItem('user_role', response.data.role);
+
       // Since it's MVP, we just redirect based on role
       if (response.data.role === 'customer') {
         navigate('/client/home');

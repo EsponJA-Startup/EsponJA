@@ -38,7 +38,14 @@ export default function Register() {
     e.preventDefault();
     setError(null);
     try {
-      await api.post('/auth/register', { ...formData, role });
+      const response = await api.post('/auth/register', { ...formData, role });
+      
+      // Save to localStorage
+      if (response.data.user_id) {
+        localStorage.setItem('user_id', response.data.user_id);
+      }
+      localStorage.setItem('user_role', response.data.role);
+
       setSubmitted(true);
     } catch (err) {
       if (err.response && err.response.data && err.response.data.detail) {
