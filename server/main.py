@@ -4,9 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from pydantic import BaseModel
 import bcrypt
+import uuid
+from datetime import date, time
 
 from app.database import create_db_and_tables, get_session
-from app.models import Client, Professional, Waitlist
+from app.models import Client, Professional, Waitlist, ServiceRequest
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
@@ -48,6 +50,25 @@ class WaitlistRequest(BaseModel):
     email: str
     intended_role: str | None = None
 
+class AdminLoginRequest(BaseModel):
+    password: str
+
+class ServiceRequestCreate(BaseModel):
+    client_id: uuid.UUID
+    service_type: str
+    home_type: str
+    bedrooms: str
+    bathrooms: str
+    has_pets: bool
+    cep: str
+    address: str
+    scheduled_date: date
+    scheduled_time: time
+
+class ServiceRequestUpdate(BaseModel):
+    status: str | None = None
+    professional_id: uuid.UUID | None = None
+
 @app.post("/api/auth/register")
 def register(request: RegisterRequest, session: Session = Depends(get_session)):
     full_name = f"{request.name} {request.last_name}".strip()
@@ -84,7 +105,7 @@ def register(request: RegisterRequest, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(new_user)
     
-    return {"message": "User created successfully", "role": request.role}
+    return {"message": "User created successfully", "role": request.role, "user_id": str(new_user.id)}
 
 @app.post("/api/auth/login")
 def login(request: LoginRequest, session: Session = Depends(get_session)):
@@ -111,3 +132,52 @@ def join_waitlist(request: WaitlistRequest, session: Session = Depends(get_sessi
     session.commit()
     
     return {"message": "Successfully added to waitlist"}
+
+@app.post("/api/auth/admin-login")
+def admin_login(request: AdminLoginRequest):
+    if request.password == "admin123":
+        return {"message": "Admin login successful", "role": "admin"}
+    raise HTTPException(status_code=401, detail="Invalid admin credentials")
+
+@app.post("/api/service-requests")
+def create_service_request(request: ServiceRequestCreate, session: Session = Depends(get_session)):
+    client = session.get(Client, request.client_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+        
+    db_request = ServiceRequest(**request.model_dump())
+    session.add(db_request)
+    session.commit()
+    session.refresh(db_request)
+    return db_request
+
+@app.get("/api/service-requests")
+def get_service_requests(session: Session = Depends(get_session)):
+    requests = session.exec(select(ServiceRequest)).all()
+    return requests
+
+@app.patch("/api/service-requests/{request_id}")
+def update_service_request(request_id: uuid.UUID, update_data: ServiceRequestUpdate, session: Session = Depends(get_session)):
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if update_data.status is not None:
+        db_request.status = update_data.status
+    if update_data.professional_id is not None:
+        db_request.professional_id = update_data.professional_id
+        
+    session.add(db_request)
+    session.commit()
+    session.refresh(db_request)
+    return db_request
+
+@app.get("/api/professionals")
+def get_professionals(session: Session = Depends(get_session)):
+    professionals = session.exec(select(Professional)).all()
+    return professionals
+
+@app.get("/api/clients")
+def get_clients(session: Session = Depends(get_session)):
+    clients = session.exec(select(Client)).all()
+    return clients

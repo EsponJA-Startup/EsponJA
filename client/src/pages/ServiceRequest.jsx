@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import api from '../services/api';
 import './ServiceRequest.css';
 
 export default function ServiceRequest() {
@@ -27,10 +28,35 @@ export default function ServiceRequest() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Solicitação enviada! (Simulação de MVP)");
-    navigate('/client/home');
+    const userId = localStorage.getItem('user_id');
+    
+    if (!userId) {
+      alert("Você precisa estar logado para solicitar um serviço.");
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await api.post('/service-requests', {
+        client_id: userId,
+        service_type: formData.serviceType,
+        home_type: formData.homeType,
+        bedrooms: formData.bedrooms,
+        bathrooms: formData.bathrooms,
+        has_pets: formData.hasPets === 'sim',
+        cep: formData.cep,
+        address: formData.address,
+        scheduled_date: formData.date,
+        scheduled_time: formData.time + ":00" // Backend expects valid time string (HH:MM:SS)
+      });
+      alert("Solicitação enviada com sucesso!");
+      navigate('/client/home');
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao enviar solicitação. Tente novamente.");
+    }
   };
 
   return (

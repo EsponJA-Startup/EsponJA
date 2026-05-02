@@ -7,6 +7,7 @@ import ClientDashboard from './pages/ClientDashboard';
 import ClientHome from './pages/ClientHome';
 import ProviderHome from './pages/ProviderHome';
 import ServiceRequest from './pages/ServiceRequest';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css'; 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path="/client/home" element={<ClientHome />} />
           <Route path="/provider/home" element={<ProviderHome />} />
           <Route path="/client/request-service" element={<ServiceRequest />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
     </BrowserRouter>
