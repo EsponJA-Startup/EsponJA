@@ -48,6 +48,7 @@ class WaitlistRequest(BaseModel):
     email: str
     phone: str | None = None
     intended_role: str | None = None
+    requested_service: str | None = None
 
 @app.post("/api/auth/register")
 def register(request: RegisterRequest, session: Session = Depends(get_session)):
@@ -120,7 +121,12 @@ def join_waitlist(request: WaitlistRequest, session: Session = Depends(get_sessi
     if existing_professional:
         raise HTTPException(status_code=400, detail="Email already registered as Professional")
         
-    entry = Waitlist(email=email_lower, phone=request.phone, intended_role=request.intended_role)
+    entry = Waitlist(
+        email=email_lower, 
+        phone=request.phone, 
+        intended_role=request.intended_role,
+        requested_service=request.requested_service
+    )
     session.add(entry)
     session.commit()
     

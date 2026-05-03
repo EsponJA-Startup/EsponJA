@@ -69,4 +69,5 @@ class Waitlist(SQLModel, table=True):
     email: str
     phone: str | None = None
     intended_role: str | None = None  # "customer" or "provider"
+    requested_service: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

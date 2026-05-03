@@ -104,6 +104,32 @@ Goal: Frontend ready to connect to a FastAPI backend with no CORS issues during 
 
 Goal: Fully connected FastAPI backend + React frontend with auth and waitlist functionality.
 
-7. 
+7. Act as a Senior Full-Stack Engineer specializing in React and FastAPI.
+
+We are building the MVP for a home services marketplace called EsponJÁ. Following Lean Startup methodologies and advice from our mentor, we want to implement a "Painted Door Test" (Fake Door) on our Waitlist.
+
+Our goal is to discover market demand for services beyond basic cleaning. To do this, we want to add an open text field to our waitlist form where customers can explicitly type the service they are looking for (e.g., "Electrician", "Plumber", "AC Repair").
+
+Please provide the updated code for the following requirements:
+
+1. Backend Updates (FastAPI + SQLModel)
+
+    Update the Waitlist model in server/app/models.py. Add a new column called requested_service: str | None = None.
+
+    Update the WaitlistRequest Pydantic schema in server/main.py to accept this new field.
+
+    Ensure the join_waitlist endpoint properly saves this new field to the database.
+
+2. Frontend Updates (React - client/src/components/CTA.jsx)
+
+    Update the CTA.jsx component to include a new state variable for requestedService.
+
+    Add a new text input field to the waitlist form (e.g., placeholder: "Qual serviço você está procurando? Ex: Eletricista, Limpeza...").
+
+    UX Rule: This new input should ideally only be visible if the intendedRole is set to "customer" (Contratar). If they select "provider" (Trabalhar), we don't need to ask this right now.
+
+    Update the api.post('/waitlist', ...) call to include the requested_service in the payload.
+
+Keep the existing styling classes (waitlist-input, waitlist-btn, etc.) intact. Generate only the necessary code snippets for models.py, main.py, and CTA.jsx.
 
 

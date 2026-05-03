@@ -27,7 +27,7 @@
 
 @media (min-width: 640px) {
   .cta-container {
-    max-width: 1000px;
+    max-width: 100%;
   }
 }
 

@@ -6,6 +6,7 @@ export default function CTA() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [intendedRole, setIntendedRole] = useState('customer');
+  const [requestedService, setRequestedService] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
@@ -24,10 +25,16 @@ export default function CTA() {
 
     if (email) {
       try {
-        await api.post('/waitlist', { email, phone, intended_role: intendedRole });
+        await api.post('/waitlist', { 
+          email, 
+          phone, 
+          intended_role: intendedRole,
+          requested_service: requestedService
+        });
         setSubmitted(true);
         setEmail('');
         setPhone('');
+        setRequestedService('');
       } catch (err) {
         if (err.response && err.response.data && err.response.data.detail) {
           setError(err.response.data.detail);
@@ -76,6 +83,15 @@ export default function CTA() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/[^0-9\+\-\(\)\s]/g, ''))}
               />
+              {intendedRole === 'customer' && (
+                <input 
+                  type="text" 
+                  placeholder="Qual serviço você está procurando?" 
+                  className="waitlist-input"
+                  value={requestedService}
+                  onChange={(e) => setRequestedService(e.target.value)}
+                />
+              )}
               <button type="submit" className="waitlist-btn">Entrar na Fila</button>
             </form>
             {error && <p className="waitlist-error" style={{ color: '#ffb3b3', marginTop: '1rem', fontSize: '1rem', textAlign: 'center', fontWeight: '500' }}>{error}</p>}
