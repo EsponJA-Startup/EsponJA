@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv() # Load variables from .env file into os.environ
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +12,7 @@ from datetime import date, time
 
 from app.database import create_db_and_tables, get_session
 from app.models import Client, Professional, Waitlist, ServiceRequest
+from app.auth import create_access_token, get_current_user
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
@@ -112,12 +116,26 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
     # Check clients first
     client = session.exec(select(Client).where(Client.email == request.email)).first()
     if client and verify_password(request.password, client.password):
-        return {"message": "Login successful", "role": "customer", "user_id": str(client.id)}
+        access_token = create_access_token(data={"sub": str(client.id), "role": "customer"})
+        return {
+            "message": "Login successful", 
+            "role": "customer", 
+            "user_id": str(client.id),
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
         
     # Check professionals
     professional = session.exec(select(Professional).where(Professional.email == request.email)).first()
     if professional and verify_password(request.password, professional.password):
-        return {"message": "Login successful", "role": "provider", "user_id": str(professional.id)}
+        access_token = create_access_token(data={"sub": str(professional.id), "role": "provider"})
+        return {
+            "message": "Login successful", 
+            "role": "provider", 
+            "user_id": str(professional.id),
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
         
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -178,6 +196,11 @@ def get_professionals(session: Session = Depends(get_session)):
     return professionals
 
 @app.get("/api/clients")
-def get_clients(session: Session = Depends(get_session)):
+def get_clients(
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user)
+):
+    # This is an example of a protected endpoint. 
+    # current_user will contain {"user_id": "...", "role": "..."}
     clients = session.exec(select(Client)).all()
     return clients

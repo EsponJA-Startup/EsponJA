@@ -1,8 +1,8 @@
-# EsponJÁ - Startup MVP 🚀
+# EsponJÁ - Frontend Client 🚀
 
-Welcome to the EsponJÁ MVP repository! This project is the initial Minimum Viable Product (MVP) landing page for EsponJÁ, a platform connecting users with verified household professionals.
+Welcome to the EsponJÁ frontend repository! This folder contains the user interface and components for the EsponJÁ MVP marketplace, a platform connecting users with verified household professionals.
 
-If you are new to this codebase—or new to modern frontend development in general—this document is tailored for you. It serves as a Senior-level guide to understanding the architecture, the tools we use, and how to start contributing immediately.
+If you are new to this codebase—or new to modern frontend development in general—this document is tailored for you. It serves as a beginner-friendly guide to understanding the architecture, the tools we use, and how to start contributing immediately.
 
 ---
 
@@ -27,12 +27,13 @@ Historically, React apps were built with tools like Webpack (e.g., Create React 
 We follow a modular, component-based architecture. Here's how the codebase is organized:
 
 ```text
-mvp-startup/
+client/
 ├── public/             # Static assets that don't need processing (e.g., favicon)
 ├── src/
 │   ├── assets/         # Images, icons, and other media
 │   ├── components/     # Reusable React components (Navbar, Hero, CTA, etc.)
 │   ├── pages/          # Full page views (Home, Login, Register) tied to routes
+│   ├── services/       # API integration logic (e.g., api.js with Axios)
 │   ├── App.jsx         # The root component that ties everything together (Routing)
 │   ├── main.jsx        # The entry point that mounts React to the DOM
 │   └── index.css       # Global CSS styles and design system variables
@@ -50,13 +51,13 @@ mvp-startup/
 
 ## 🚀 Getting Started
 
-Follow these steps to run the project on your local machine.
+Follow these steps to run the frontend on your local machine.
 
 ### Prerequisites
 Make sure you have [Node.js](https://nodejs.org/) installed (version 18+ is recommended).
 
 ### 1. Install Dependencies
-Open your terminal, navigate to the project folder, and run:
+Open your terminal, navigate to the `client/` folder, and run:
 ```bash
 npm install
 ```
@@ -113,72 +114,18 @@ If you're tasked with creating a new piece of UI, follow this standard workflow:
    );
    ```
 
-## 🚀 Recent MVP Features
+---
 
-As part of our continuous development, we recently added the foundation for our authenticated experiences:
+## 🔌 API Integration
 
-### Client and Provider Dashboards
-We have prototyped the core dashboards for our users:
-- **Client Homepage (`/client/home`)**: Clients can quickly select from 5 distinct cleaning services (Rápida, Padrão, Pesada, Pós-obra, Pré-mudança). It also features a "Matching Inteligente" (Smart Matching) preview to show top-rated professionals nearby.
-- **Provider Homepage (`/provider/home`)**: Professionals can manage their schedule through a real-time calendar agenda, track their earnings and "Escrow" (retained) payments, and view their Trust Score.
+The frontend seamlessly communicates with the FastAPI backend located in the `server/` directory.
 
-To see these in action, start the development server (`npm run dev`) and click "Entrar" on the main page!
-
-### Backend Database Schema (SQLModel)
-While the frontend is currently in a "Wizard of Oz" prototype phase (mocked data), we have laid the groundwork for our Python FastAPI backend. We defined the core database tables in `server/app/models.py` using **SQLModel**:
-- **Client**: Stores client details and contact info.
-- **Professional**: Stores the professional's profile, Trust Score, badges, and wallet balances.
-- **ServiceRequest**: The heart of the marketplace linking a Client to a Professional (when matched), storing service details, address, date, time, and payment status.
+1. **Centralized API Service Layer**: We use `axios` to handle HTTP requests in `src/services/api.js`. This file acts as the central hub for data fetching. It automatically injects the **JWT Authentication Token** into outgoing requests and globally handles unauthorized (401) errors by logging the user out.
+2. **Development Proxying**: The Vite configuration (`vite.config.js`) proxies all requests starting with `/api` directly to `http://localhost:8000`. This effortlessly sidesteps CORS issues during local development.
 
 ## 🎨 Design System Note
 
 EsponJÁ relies heavily on a custom yellow-themed UI to communicate trust, energy, and cleanliness. When styling new components, always check `index.css` first for existing CSS variables (like `--primary-yellow`, `--text-dark`, etc.) rather than hardcoding hex colors. This ensures consistency across the entire app.
-
-## 🏗️ Upcoming Architecture: The FastAPI Backend
-
-As EsponJÁ scales, we are transitioning from a static frontend MVP to a full-stack application. We have chosen **FastAPI** (Python) for our upcoming backend.
-
-If you haven't worked with this stack before, here is our roadmap and how we are preparing for the integration:
-
-### Why FastAPI?
-- **Speed**: It is one of the fastest Python frameworks available, built on modern async Python (Starlette & Pydantic).
-- **Type Safety**: It uses Python type hints, catching errors early and making the code highly readable.
-- **Automatic Docs**: It generates interactive API documentation (Swagger UI) out-of-the-box. This means frontend developers can easily see what endpoints are available and test them directly in the browser.
-
-### 📂 Repository Restructuring Plan
-To support the backend within GitHub, we will be transitioning this repository into a structured workspace. You can expect the root folder to evolve to look like this:
-
-```text
-esponja-platform/
-├── frontend/           # The current React + Vite app will live here
-├── backend/            # The new FastAPI Python app will live here
-│   ├── main.py         # FastAPI entry point
-│   ├── api/            # API routes/controllers
-│   ├── models/         # Database models and schemas
-│   └── requirements.txt
-└── README.md
-```
-
-### 🔌 Frontend API Integration 
-The frontend architecture has been prepared to seamlessly communicate with the upcoming FastAPI backend. Here are the core integrations implemented:
-
-1. **Environment Variables**: We introduced `.env` and `.env.example` files. This configuration explicitly manages environment-specific variables like `VITE_API_URL`, allowing smooth transitions across development, staging, and production environments.
-2. **Centralized API Service Layer**: `axios` has been integrated to handle HTTP requests. We've established a dedicated service layer in `src/services/api.js`. This creates a robust separation of concerns where UI components handle rendering and the service layer manages data fetching, default headers, and global interceptors (e.g., handling 401 Unauthorized errors).
-3. **CORS & Development Proxying**: The Vite configuration (`vite.config.js`) is now set up to proxy all requests starting with `/api` directly to `http://localhost:8000`. This effortlessly sidesteps Cross-Origin Resource Sharing (CORS) issues during local development between the React frontend and the FastAPI server.
-4. **State & Error Handling Foundation**: The `axios` interceptors provide a solid groundwork for implementing robust loading states, success notifications, and comprehensive error handling once the frontend connects to live endpoints (e.g., Waitlist registration or User Login).
-
-### ⚙️ MVP Backend Integration (FastAPI + SQLModel)
-We have successfully built the initial bridge between our React frontend and the FastAPI backend, utilizing a local SQLite database for the MVP phase.
-
-1. **Authentication (Login & Register)**:
-   - The `Client` and `Professional` models were updated to securely hash and store passwords using `passlib[bcrypt]`.
-   - The `Register.jsx` and `Login.jsx` components now communicate directly with `POST /api/auth/register` and `POST /api/auth/login`. This effectively saves new users to the database and verifies credentials upon login, dynamically routing them to their respective dashboards.
-   > [!NOTE]
-   > **Future Implementation Note (JWT Auth)**: Currently, the backend uses a simulated session response (returning the role and user ID). Before launching to production, we must implement robust **JWT-based authentication** (JSON Web Tokens) to secure protected routes.
-
-2. **Waitlist (Lista de Espera)**:
-   - A dedicated `Waitlist` table was created in `models.py` to capture early-adopter interest.
-   - The waitlist form (`CTA.jsx`) has been upgraded to not only capture the user's `email` but also their intended role (`customer` or `provider`), sending data to `POST /api/waitlist`.
 
 ---
 
