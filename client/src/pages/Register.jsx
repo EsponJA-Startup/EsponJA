@@ -49,7 +49,13 @@ export default function Register() {
       setSubmitted(true);
     } catch (err) {
       if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
+        const detail = err.response.data.detail;
+        if (Array.isArray(detail)) {
+          // It's a validation error from Pydantic (e.g. password too weak)
+          setError(detail[0].msg.replace('Value error, ', ''));
+        } else {
+          setError(detail);
+        }
       } else {
         setError('Ocorreu um erro ao realizar o cadastro. Tente novamente.');
       }

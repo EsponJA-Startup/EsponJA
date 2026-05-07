@@ -25,16 +25,14 @@ export default function Login() {
         localStorage.setItem('user_id', response.data.user_id);
       }
       localStorage.setItem('user_role', response.data.role);
-      
-      if (response.data.access_token) {
-        localStorage.setItem('access_token', response.data.access_token);
-      }
 
       // Since it's MVP, we just redirect based on role
       if (response.data.role === 'customer') {
         navigate('/client/home');
       } else if (response.data.role === 'provider') {
         navigate('/provider/home');
+      } else if (response.data.role === 'admin') {
+        navigate('/admin');
       } else {
         setError('Tipo de usuário desconhecido.');
       }
