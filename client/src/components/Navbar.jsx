@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import api from '../services/api';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -9,7 +10,12 @@ export default function Navbar() {
   const location = useLocation();
   const userRole = localStorage.getItem('user_role');
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
     localStorage.removeItem('user_role');
     window.location.href = '/login';
   };

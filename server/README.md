@@ -98,10 +98,13 @@ def say_hello():
 ```
 This tells FastAPI: "When someone visits `/api/hello` with a GET request, run this function and return the data."
 
-### 3. Authentication (`app/auth.py`)
-We use **JWT (JSON Web Tokens)** for secure authentication. 
-- When a user logs in, `main.py` calls `create_access_token` to generate a secure badge (token) valid for 24 hours.
-- For protected routes, we use the `get_current_user` dependency. It checks if the user's request includes a valid token before letting them access the data.
+### 3. Security & Authentication (`app/auth.py` & `main.py`)
+Security is a top priority for the EsponJÁ MVP. We use a robust **JWT (JSON Web Tokens)** system combined with strict data validation:
+- **HttpOnly Cookies**: When a user logs in, their JWT is stored in a secure, `HttpOnly` cookie. This means malicious scripts (XSS) cannot access the token, making the app much more secure than storing tokens in `localStorage`.
+- **Protected Routes**: We use the `get_current_user` dependency to verify the token. It also enforces Role-Based Access Control (RBAC), ensuring that clients, providers, and admins can only access data they own (preventing IDOR - Insecure Direct Object Reference).
+- **Secure Logout**: Our `/api/auth/logout` endpoint actively destroys the session cookie on the browser, guaranteeing the session is completely terminated.
+- **Data Validation & DoS Protection**: Thanks to Pydantic and `SQLModel`, every incoming request is strictly validated. We enforce max string lengths (e.g., `Field(max_length=255)`) to prevent attackers from sending massive payloads that could exhaust server memory (Denial of Service).
+- **Timing Attack Mitigation**: Sensitive checks, like the Admin password login, use `hmac.compare_digest()` to securely compare strings in constant time.
 
 ---
 

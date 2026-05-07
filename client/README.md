@@ -123,6 +123,16 @@ The frontend seamlessly communicates with the FastAPI backend located in the `se
 1. **Centralized API Service Layer**: We use `axios` to handle HTTP requests in `src/services/api.js`. This file acts as the central hub for data fetching. It automatically injects the **JWT Authentication Token** into outgoing requests and globally handles unauthorized (401) errors by logging the user out.
 2. **Development Proxying**: The Vite configuration (`vite.config.js`) proxies all requests starting with `/api` directly to `http://localhost:8000`. This effortlessly sidesteps CORS issues during local development.
 
+## 🔒 Security & Authentication
+
+We've implemented a robust, modern security architecture to protect our users:
+
+1. **HttpOnly Cookies**: Instead of storing sensitive authentication tokens in `localStorage` (which is vulnerable to XSS attacks), the backend sends an `HttpOnly` cookie. The browser automatically attaches this cookie to every API request without the frontend Javascript ever needing to touch it.
+2. **Global Axios Interceptors**: In `src/services/api.js`, we have an interceptor that listens to every response from the backend. If the backend returns a `401 Unauthorized` or `403 Forbidden` error (meaning the user's session expired or they tried to access an unauthorized area), the interceptor automatically clears their UI state and redirects them to the login page.
+3. **Secure Logout**: Clicking the "Sair" button doesn't just change the frontend state. It actively calls the backend `/api/auth/logout` endpoint to physically destroy the security cookie, completely severing the session.
+
+---
+
 ## 🎨 Design System Note
 
 EsponJÁ relies heavily on a custom yellow-themed UI to communicate trust, energy, and cleanliness. When styling new components, always check `index.css` first for existing CSS variables (like `--primary-yellow`, `--text-dark`, etc.) rather than hardcoding hex colors. This ensures consistency across the entire app.

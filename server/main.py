@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 import re
 import os
+import hmac
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -50,13 +51,13 @@ app.add_middleware(
 
 # Pydantic Schemas for Requests
 class RegisterRequest(BaseModel):
-    role: str
-    name: str
-    last_name: str
+    role: str = Field(max_length=50)
+    name: str = Field(max_length=100)
+    last_name: str = Field(max_length=100)
     email: EmailStr
-    whatsapp_number: str
-    password: str
-    specialty: str | None = None
+    whatsapp_number: str = Field(max_length=20)
+    password: str = Field(max_length=100)
+    specialty: str | None = Field(default=None, max_length=100)
 
     @field_validator('password')
     def validate_password(cls, v):
@@ -83,13 +84,13 @@ class AdminLoginRequest(BaseModel):
 
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID
-    service_type: str
-    home_type: str
-    bedrooms: str
-    bathrooms: str
+    service_type: str = Field(max_length=100)
+    home_type: str = Field(max_length=100)
+    bedrooms: str = Field(max_length=50)
+    bathrooms: str = Field(max_length=50)
     has_pets: bool
-    cep: str
-    address: str
+    cep: str = Field(max_length=20)
+    address: str = Field(max_length=255)
     scheduled_date: date
     scheduled_time: time
 
@@ -143,7 +144,7 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     admin_password = os.getenv("ADMIN_PASSWORD")
     
     # Check admin first
-    if admin_email and admin_password and data.email == admin_email and data.password == admin_password:
+    if admin_email and admin_password and data.email == admin_email and hmac.compare_digest(data.password, admin_password):
         access_token = create_access_token(data={"sub": "admin", "role": "admin"})
         response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
         return {"message": "Admin login successful", "role": "admin", "user_id": "admin"}
@@ -180,6 +181,11 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
         
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
+@app.post("/api/auth/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token", httponly=True, secure=True, samesite="lax")
+    return {"message": "Successfully logged out"}
+
 @app.post("/api/waitlist")
 @limiter.limit("10/minute")
 def join_waitlist(http_request: Request, request: WaitlistRequest, session: Session = Depends(get_session)):
@@ -195,7 +201,8 @@ def join_waitlist(http_request: Request, request: WaitlistRequest, session: Sess
 
 # admin_login removed, handled in login endpoint
 @app.post("/api/service-requests")
-def create_service_request(request: ServiceRequestCreate, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+@limiter.limit("5/minute")
+def create_service_request(http_request: Request, request: ServiceRequestCreate, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin" and current_user["user_id"] != str(request.client_id):
         raise HTTPException(status_code=403, detail="Not authorized to create requests for this client")
         
