@@ -1,4 +1,5 @@
 .admin-page {
+  padding-top: 80px; /* navbar offset */
   min-height: 100vh;
   display: flex;
   flex-direction: column;

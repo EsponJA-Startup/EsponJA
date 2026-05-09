@@ -5,26 +5,15 @@ import api from '../services/api';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
   const [requests, setRequests] = useState([]);
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(false);
-  
   const [activeTab, setActiveTab] = useState('requests');
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post('/auth/admin-login', { password });
-      setIsAuthenticated(true);
-      fetchData();
-    } catch (err) {
-      setError('Senha incorreta.');
-    }
-  };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,6 +25,11 @@ export default function AdminDashboard() {
       setProfessionals(proRes.data);
     } catch (err) {
       console.error("Failed to fetch data", err);
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        setError('Acesso negado. Redirecionando...');
+      } else {
+        setError('Erro ao carregar os dados.');
+      }
     } finally {
       setLoading(false);
     }
@@ -50,35 +44,6 @@ export default function AdminDashboard() {
       alert("Erro ao atualizar status");
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="admin-page">
-        <Navbar />
-        <main className="admin-login-main container">
-          <div className="admin-card">
-            <h2>Acesso Restrito</h2>
-            <p>Dashboard de Administração Interna</p>
-            <form onSubmit={handleLogin}>
-              {error && <div className="mock-alert error">{error}</div>}
-              <div className="form-group">
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  placeholder="Senha Administrativa" 
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" className="btn btn-primary">Entrar</button>
-            </form>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="admin-page">
@@ -104,6 +69,8 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
+
+        {error && <div className="alert alert-danger">{error}</div>}
 
         {loading ? (
           <p>Carregando dados...</p>

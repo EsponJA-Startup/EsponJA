@@ -31,6 +31,8 @@ export default function Login() {
         navigate('/client/home');
       } else if (response.data.role === 'provider') {
         navigate('/provider/home');
+      } else if (response.data.role === 'admin') {
+        navigate('/admin');
       } else {
         setError('Tipo de usuário desconhecido.');
       }

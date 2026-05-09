@@ -9,16 +9,13 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // Interceptor for requests (e.g., attach a token)
 api.interceptors.request.use(
   (config) => {
-    // If we have an auth token in the future, we can add it here.
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // Tokens are now handled automatically via HttpOnly cookies
     return config;
   },
   (error) => Promise.reject(error)
@@ -28,10 +25,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Example: Handle 401 Unauthorized globally
-    if (error.response && error.response.status === 401) {
-      console.warn('Unauthorized. Please log in again.');
-      // Handle logout or token refresh logic here
+    // Handle 401 Unauthorized and 403 Forbidden globally
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      console.warn('Unauthorized access. Redirecting to login.');
+      // Handle logout/cleanup
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('user_role');
+      // Only redirect if we are not already on the login or register page
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
