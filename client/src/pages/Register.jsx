@@ -89,7 +89,7 @@ export default function Register() {
 
           {submitted ? (
             <div className="mock-alert">
-              <strong>Cadastro realizado!</strong> Em um ambiente de produção o {role === 'provider' ? 'profissional' : 'cliente'} receberia um e-mail de verificação para começar a usar a plataforma. Mas o cadastro foi concluído no backend com sucesso!
+              <strong>Cadastro realizado com sucesso!</strong>
               <br/><br/>
               <Link to="/login" className="btn btn-primary" style={{ display: 'block', textAlign: 'center' }}>Ir para o Login</Link>
             </div>

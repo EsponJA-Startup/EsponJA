@@ -83,7 +83,7 @@ class AdminLoginRequest(BaseModel):
     password: str
 
 class ServiceRequestCreate(BaseModel):
-    client_id: uuid.UUID
+    client_id: uuid.UUID | None = None
     service_type: str = Field(max_length=100)
     home_type: str = Field(max_length=100)
     bedrooms: str = Field(max_length=50)
@@ -97,6 +97,15 @@ class ServiceRequestCreate(BaseModel):
 class ServiceRequestUpdate(BaseModel):
     status: str | None = None
     professional_id: uuid.UUID | None = None
+    service_type: str | None = None
+    home_type: str | None = None
+    bedrooms: str | None = None
+    bathrooms: str | None = None
+    has_pets: bool | None = None
+    cep: str | None = None
+    address: str | None = None
+    scheduled_date: date | None = None
+    scheduled_time: time | None = None
 
 @app.post("/api/auth/register")
 @limiter.limit("5/minute")
@@ -188,12 +197,12 @@ def logout(response: Response):
 
 @app.post("/api/waitlist")
 @limiter.limit("10/minute")
-def join_waitlist(http_request: Request, request: WaitlistRequest, session: Session = Depends(get_session)):
-    existing = session.exec(select(Waitlist).where(Waitlist.email == request.email)).first()
+def join_waitlist(request: Request, data: WaitlistRequest, session: Session = Depends(get_session)):
+    existing = session.exec(select(Waitlist).where(Waitlist.email == data.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already on waitlist")
         
-    entry = Waitlist(email=request.email, intended_role=request.intended_role)
+    entry = Waitlist(email=data.email, intended_role=data.intended_role)
     session.add(entry)
     session.commit()
     
@@ -202,15 +211,23 @@ def join_waitlist(http_request: Request, request: WaitlistRequest, session: Sess
 # admin_login removed, handled in login endpoint
 @app.post("/api/service-requests")
 @limiter.limit("5/minute")
-def create_service_request(http_request: Request, request: ServiceRequestCreate, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin" and current_user["user_id"] != str(request.client_id):
-        raise HTTPException(status_code=403, detail="Not authorized to create requests for this client")
+def create_service_request(request: Request, data: ServiceRequestCreate, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role == "customer":
+        data.client_id = uuid.UUID(user_id)
+    elif role == "admin":
+        if not data.client_id:
+            raise HTTPException(status_code=400, detail="Admin must specify client_id")
+    else:
+        raise HTTPException(status_code=403, detail="Providers cannot create requests")
         
-    client = session.get(Client, request.client_id)
+    client = session.get(Client, data.client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
         
-    db_request = ServiceRequest(**request.model_dump())
+    db_request = ServiceRequest(**data.model_dump())
     session.add(db_request)
     session.commit()
     session.refresh(db_request)
@@ -240,6 +257,20 @@ def get_service_requests(session: Session = Depends(get_session), current_user: 
                 result.append(ServiceRequestResponse(**r.model_dump()))
         return result
 
+@app.get("/api/service-requests/{request_id}")
+def get_service_request(request_id: uuid.UUID, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role == "customer" and str(db_request.client_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    return ServiceRequestResponse(**db_request.model_dump())
+
 @app.patch("/api/service-requests/{request_id}")
 def update_service_request(request_id: uuid.UUID, update_data: ServiceRequestUpdate, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
     db_request = session.get(ServiceRequest, request_id)
@@ -260,15 +291,32 @@ def update_service_request(request_id: uuid.UUID, update_data: ServiceRequestUpd
             if update_data.professional_id != uuid.UUID(user_id) or update_data.status != "Em Andamento":
                 raise HTTPException(status_code=403, detail="Providers can only accept pending requests")
             
-    if update_data.status is not None:
-        db_request.status = update_data.status
-    if update_data.professional_id is not None:
-        db_request.professional_id = update_data.professional_id
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(db_request, key, value)
         
     session.add(db_request)
     session.commit()
     session.refresh(db_request)
     return db_request
+
+@app.delete("/api/service-requests/{request_id}")
+def delete_service_request(request_id: uuid.UUID, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role == "customer" and str(db_request.client_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    elif role == "provider":
+        raise HTTPException(status_code=403, detail="Providers cannot delete requests")
+        
+    session.delete(db_request)
+    session.commit()
+    return {"message": "Service request deleted successfully"}
 
 @app.get("/api/professionals", response_model=list[ProfessionalResponse])
 def get_professionals(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):

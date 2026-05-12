@@ -38,7 +38,7 @@ export default function Navbar() {
           EsponJÁ
         </Link>
 
-        {isHome && (
+        {isHome && !userRole && (
           <div className="nav-links">
             <a href="#how-it-works" className="nav-link">Como Funciona</a>
             <a href="#features" className="nav-link">Segurança</a>
@@ -50,9 +50,21 @@ export default function Navbar() {
         <div className="nav-actions">
           {userRole ? (
             <>
-              {userRole === 'admin' && <Link to="/admin" className="nav-link hide-mobile" style={{ display: 'flex', alignItems: 'center', paddingTop: '3px' }}><Home size={27} /></Link>}
-              {userRole === 'customer' && <Link to="/client/home" className="nav-link hide-mobile" style={{ display: 'flex', alignItems: 'center', paddingTop: '3px' }}><Home size={27} /></Link>}
-              {userRole === 'provider' && <Link to="/provider/home" className="nav-link hide-mobile" style={{ display: 'flex', alignItems: 'center', paddingTop: '3px' }}><Home size={27} /></Link>}
+              {userRole === 'admin' && (
+                <Link to="/admin" className="nav-link hide-mobile">Dashboard</Link>
+              )}
+              {userRole === 'customer' && (
+                <>
+                  <Link to="/client/home" className="nav-link hide-mobile">Dashboard</Link>
+                  <Link to="/client/home" className="nav-link hide-mobile">Meus Pedidos</Link>
+                </>
+              )}
+              {userRole === 'provider' && (
+                <>
+                  <Link to="/provider/home" className="nav-link hide-mobile">Dashboard</Link>
+                  <Link to="/provider/home" className="nav-link hide-mobile">Meus Serviços</Link>
+                </>
+              )}
               <button onClick={handleLogout} className="btn btn-secondary">Sair</button>
             </>
           ) : (

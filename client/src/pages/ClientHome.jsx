@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Star, MapPin, Calendar, Clock, ShieldCheck } from 'lucide-react';
+import { Star, MapPin, Calendar, Clock, ShieldCheck, Edit, Trash2 } from 'lucide-react';
+import api from '../services/api';
 import './ClientHome.css';
 
 export default function ClientHome() {
@@ -47,17 +48,35 @@ export default function ClientHome() {
     }
   ];
 
-  const myAppointments = [
-    {
-      id: 101,
-      proName: "Fernanda Lima",
-      serviceType: "Limpeza Padrão",
-      date: "28 de Abril, 2026",
-      time: "14:00",
-      status: "Confirmado",
-      paymentStatus: "Pagamento Protegido (Escrow)"
+  const [myAppointments, setMyAppointments] = useState([]);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await api.get('/service-requests');
+        setMyAppointments(response.data);
+      } catch (err) {
+        console.error("Error fetching appointments:", err);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Tem certeza que deseja excluir este pedido?")) {
+      try {
+        await api.delete(`/service-requests/${id}`);
+        setMyAppointments(prev => prev.filter(appt => appt.id !== id));
+      } catch (err) {
+        console.error("Error deleting appointment:", err);
+        alert("Erro ao excluir o pedido.");
+      }
     }
-  ];
+  };
+
+  const handleEdit = (id) => {
+    navigate(`/client/request-service?edit=${id}`);
+  };
 
   return (
     <div className="client-home">
@@ -122,23 +141,39 @@ export default function ClientHome() {
           <section className="appointments-section dashboard-card">
             <h3>Meus Agendamentos</h3>
             <div className="appointments-list">
-              {myAppointments.map(appt => (
-                <div key={appt.id} className="appointment-card">
-                  <div className="appt-header">
-                    <h4>{appt.serviceType}</h4>
-                    <span className="status-badge success">{appt.status}</span>
+              {myAppointments.length === 0 ? (
+                <p>Nenhum agendamento encontrado.</p>
+              ) : (
+                myAppointments.map(appt => (
+                  <div key={appt.id} className="appointment-card">
+                    <div className="appt-header">
+                      <h4>{appt.service_type}</h4>
+                      <span className={`status-badge ${appt.status === 'Confirmado' || appt.status === 'Concluído' ? 'success' : 'pending'}`}>
+                        {appt.status}
+                      </span>
+                    </div>
+                    <p className="appt-pro">
+                      com <strong>{appt.professional_id ? "Profissional Atribuído" : "Aguardando Profissional"}</strong>
+                    </p>
+                    <div className="appt-details">
+                      <span><Calendar size={16} /> {appt.scheduled_date}</span>
+                      <span><Clock size={16} /> {appt.scheduled_time}</span>
+                    </div>
+                    <div className="appt-payment">
+                      <ShieldCheck size={18} className="shield-icon" />
+                      <span>{appt.payment_status}</span>
+                    </div>
+                    <div className="appt-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                      <button onClick={() => handleEdit(appt.id)} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Edit size={14} /> Editar
+                      </button>
+                      <button onClick={() => handleDelete(appt.id)} className="btn btn-danger btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none' }}>
+                        <Trash2 size={14} /> Excluir
+                      </button>
+                    </div>
                   </div>
-                  <p className="appt-pro">com <strong>{appt.proName}</strong></p>
-                  <div className="appt-details">
-                    <span><Calendar size={16} /> {appt.date}</span>
-                    <span><Clock size={16} /> {appt.time}</span>
-                  </div>
-                  <div className="appt-payment">
-                    <ShieldCheck size={18} className="shield-icon" />
-                    <span>{appt.paymentStatus}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
         </div>
