@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -10,6 +10,7 @@ export default function ServiceRequest() {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const initialService = queryParams.get("type") || "Limpeza Padrão";
+  const editId = queryParams.get("edit");
 
   const [formData, setFormData] = useState({
     serviceType: initialService,
@@ -23,6 +24,32 @@ export default function ServiceRequest() {
     time: ''
   });
 
+  useEffect(() => {
+    if (editId) {
+      const fetchRequestData = async () => {
+        try {
+          const res = await api.get(`/service-requests/${editId}`);
+          const data = res.data;
+          setFormData({
+            serviceType: data.service_type,
+            homeType: data.home_type,
+            bedrooms: data.bedrooms,
+            bathrooms: data.bathrooms,
+            hasPets: data.has_pets ? 'sim' : 'nao',
+            cep: data.cep,
+            address: data.address,
+            date: data.scheduled_date,
+            time: data.scheduled_time ? data.scheduled_time.substring(0, 5) : ''
+          });
+        } catch (err) {
+          console.error("Failed to load request data", err);
+          alert("Erro ao carregar dados do pedido.");
+        }
+      };
+      fetchRequestData();
+    }
+  }, [editId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -30,17 +57,9 @@ export default function ServiceRequest() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userId = localStorage.getItem('user_id');
-    
-    if (!userId) {
-      alert("Você precisa estar logado para solicitar um serviço.");
-      navigate('/login');
-      return;
-    }
 
     try {
-      await api.post('/service-requests', {
-        client_id: userId,
+      const payload = {
         service_type: formData.serviceType,
         home_type: formData.homeType,
         bedrooms: formData.bedrooms,
@@ -49,9 +68,16 @@ export default function ServiceRequest() {
         cep: formData.cep,
         address: formData.address,
         scheduled_date: formData.date,
-        scheduled_time: formData.time + ":00" // Backend expects valid time string (HH:MM:SS)
-      });
-      alert("Solicitação enviada com sucesso!");
+        scheduled_time: formData.time.length === 5 ? formData.time + ":00" : formData.time
+      };
+
+      if (editId) {
+        await api.patch(`/service-requests/${editId}`, payload);
+        alert("Solicitação atualizada com sucesso!");
+      } else {
+        await api.post('/service-requests', payload);
+        alert("Solicitação enviada com sucesso!");
+      }
       navigate('/client/home');
     } catch (err) {
       console.error(err);
@@ -64,7 +90,7 @@ export default function ServiceRequest() {
       <Navbar />
       <main className="request-main container">
         <div className="request-header">
-          <h2>Detalhes do Serviço</h2>
+          <h2>{editId ? "Editar Serviço" : "Detalhes do Serviço"}</h2>
           <p>Preencha os dados abaixo para encontrarmos o profissional ideal para sua {formData.serviceType}.</p>
         </div>
 
@@ -146,7 +172,7 @@ export default function ServiceRequest() {
 
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={() => navigate('/client/home')}>Cancelar</button>
-            <button type="submit" className="btn btn-primary">Encontrar Profissionais</button>
+            <button type="submit" className="btn btn-primary">{editId ? "Salvar Alterações" : "Encontrar Profissionais"}</button>
           </div>
         </form>
       </main>
