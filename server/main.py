@@ -13,6 +13,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import bcrypt
+import httpx
 import uuid
 from datetime import date, time
 
@@ -20,6 +21,8 @@ from app.database import create_db_and_tables, get_session
 from app.models import Client, Professional, Waitlist, ServiceRequest
 from app.auth import create_access_token, get_current_user
 from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse
+
+
 
 DUMMY_PASSWORD_HASH = os.getenv("DUMMY_PASSWORD_HASH", "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjIQqiRQYq")
 
@@ -109,7 +112,7 @@ class ServiceRequestUpdate(BaseModel):
 
 @app.post("/api/auth/register")
 @limiter.limit("5/minute")
-def register(request: Request, data: RegisterRequest, session: Session = Depends(get_session)):
+async def register(request: Request, data: RegisterRequest, session: Session = Depends(get_session)):
     full_name = f"{data.name} {data.last_name}".strip()
     hashed_pwd = get_password_hash(data.password)
     
@@ -144,6 +147,16 @@ def register(request: Request, data: RegisterRequest, session: Session = Depends
     session.commit()
     session.refresh(new_user)
     
+    try: 
+        async with httpx.AsyncClient() as client:
+            await client.post("http://localhost:5678/webhook/registro-esponja", json={
+                "email": new_user.email,
+                "name": new_user.name,
+                "role": data.role
+            })
+    except Exception as e:
+        print(f"Erro ao disparar gatilho de e-mail no n8n: {e}")
+
     return {"message": "User created successfully", "role": data.role, "user_id": str(new_user.id)}
 
 @app.post("/api/auth/login")
@@ -334,3 +347,6 @@ def get_clients(
         raise HTTPException(status_code=403, detail="Not authorized")
     clients = session.exec(select(Client)).all()
     return clients
+
+
+

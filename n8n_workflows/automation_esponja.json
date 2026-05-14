@@ -1,0 +1,71 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "registro-esponja",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4900bdbb-2acf-45bc-9e9e-9fb893219a36",
+      "name": "Webhook",
+      "webhookId": "5e4c96b5-6326-4cc8-89f8-588f3e1381a3"
+    },
+    {
+      "parameters": {
+        "fromEmail": "bernardo06pereiras@gmail.com",
+        "toEmail": "={{ $json.body.email }}",
+        "subject": "=Bem-vindo ao EsponJA, {{ $json.body.name }}!",
+        "html": "=Olá {{ $json.body.name }}, a tua conta foi criada com sucesso no EsponJA!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1055b9fd-ba2d-46eb-b4ba-59625d53a0c0",
+      "name": "Send an Email",
+      "webhookId": "8051468f-98a9-45ee-aa5c-cf0a3140a53e",
+      "credentials": {
+        "smtp": {
+          "id": "AOkKKXQ9evhzgr63",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "56c193b5-7e5c-4386-bd93-b74c5a250799",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "844b8080ba9b8c5b4dc7c3fdbebc0b0146519f97cbad1d1363709104c70f6b15"
+  },
+  "id": "449Rkgzubij4miJ6",
+  "tags": []
+}
