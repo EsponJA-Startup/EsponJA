@@ -24,22 +24,6 @@ export default function Hero() {
           <a href="#how-it-works" className="btn btn-secondary">Veja Como Funciona</a>
         </div>
         
-        <div className="hero-image-wrapper">
-          <img 
-            src="/hero-image.png" 
-            alt="Profissional de limpeza verificada e amigável dentro de uma casa limpa" 
-            className="hero-image"
-          />
-          <div className="trust-floating-badge">
-            <div className="icon-box">
-              <Star fill="currentColor" size={24} />
-            </div>
-            <div className="trust-text">
-              <h4>Mais Bem Avaliados</h4>
-              <p>Baseado em mais de 500 avaliações</p>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
