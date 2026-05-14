@@ -60,10 +60,9 @@ export default function CTA() {
           <div className="waitlist-form-container">
             <form className="waitlist-form" onSubmit={handleSubmit}>
               <select 
-                className="waitlist-input"
+                className="waitlist-input role-select"
                 value={intendedRole}
                 onChange={(e) => setIntendedRole(e.target.value)}
-                style={{ width: '150px', backgroundColor: 'white' }}
               >
                 <option value="customer">Contratar</option>
                 <option value="provider">Trabalhar</option>
@@ -92,7 +91,9 @@ export default function CTA() {
                   onChange={(e) => setRequestedService(e.target.value)}
                 />
               )}
-              <button type="submit" className="waitlist-btn">Entrar na Fila</button>
+              <button type="submit" className="waitlist-btn">
+                Entrar<span className="hide-mobile"> na Fila</span>
+              </button>
             </form>
             {error && <p className="waitlist-error" style={{ color: '#ffb3b3', marginTop: '1rem', fontSize: '1rem', textAlign: 'center', fontWeight: '500' }}>{error}</p>}
           </div>

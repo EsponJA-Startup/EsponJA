@@ -36,7 +36,7 @@ export default function Navbar() {
         )}
 
         <div className="nav-actions">
-          <a href="#cta" className="btn btn-primary">Entrar na Fila</a>
+          <a href="#cta" className="btn btn-primary">Entrar<span className="hide-mobile"> na Fila</span></a>
           
           <button 
             className="mobile-menu-btn" 
