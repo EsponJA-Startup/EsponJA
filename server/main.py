@@ -17,9 +17,10 @@ import uuid
 from datetime import date, time
 
 from app.database import create_db_and_tables, get_session
-from app.models import Client, Professional, Waitlist, ServiceRequest
+from app.models import Client, Professional, Waitlist, ServiceRequest, ChatSession
 from app.auth import create_access_token, get_current_user
 from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse
+from app.chatbot import process_message
 
 DUMMY_PASSWORD_HASH = os.getenv("DUMMY_PASSWORD_HASH", "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjIQqiRQYq")
 
@@ -106,6 +107,10 @@ class ServiceRequestUpdate(BaseModel):
     address: str | None = None
     scheduled_date: date | None = None
     scheduled_time: time | None = None
+
+class WebhookRequest(BaseModel):
+    phone_number: str
+    message: str
 
 @app.post("/api/auth/register")
 @limiter.limit("5/minute")
@@ -207,6 +212,17 @@ def join_waitlist(request: Request, data: WaitlistRequest, session: Session = De
     session.commit()
     
     return {"message": "Successfully added to waitlist"}
+
+@app.post("/api/whatsapp/webhook")
+@limiter.limit("100/minute")
+def whatsapp_webhook(request: Request, data: WebhookRequest, session: Session = Depends(get_session)):
+    try:
+        response_text = process_message(session, data.phone_number, data.message)
+        # In a real integration, here you would call Twilio/Meta API to send the message back.
+        # For now, we just return the text response in the API.
+        return {"reply": response_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # admin_login removed, handled in login endpoint
 @app.post("/api/service-requests")

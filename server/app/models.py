@@ -69,3 +69,10 @@ class Waitlist(SQLModel, table=True):
     email: str
     intended_role: str | None = None  # "customer" or "provider"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ChatSession(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    phone_number: str = Field(unique=True, index=True)
+    current_state: str = Field(default="WELCOME")
+    data: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
