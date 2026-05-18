@@ -92,7 +92,7 @@ export default function CTA() {
                 />
               )}
               <button type="submit" className="waitlist-btn">
-                Entrar<span className="hide-mobile"> na Fila</span>
+                Entrar na Fila
               </button>
             </form>
             {error && <p className="waitlist-error" style={{ color: '#ffb3b3', marginTop: '1rem', fontSize: '1rem', textAlign: 'center', fontWeight: '500' }}>{error}</p>}
