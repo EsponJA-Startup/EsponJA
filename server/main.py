@@ -215,11 +215,35 @@ def join_waitlist(request: Request, data: WaitlistRequest, session: Session = De
 
 @app.post("/api/whatsapp/webhook")
 @limiter.limit("100/minute")
-def whatsapp_webhook(request: Request, data: WebhookRequest, session: Session = Depends(get_session)):
+async def whatsapp_webhook(request: Request, session: Session = Depends(get_session)):
+    content_type = request.headers.get("content-type", "")
+    
+    if "application/json" in content_type:
+        data = await request.json()
+        phone_number = data.get("phone_number")
+        message = data.get("message")
+    elif "application/x-www-form-urlencoded" in content_type:
+        form_data = await request.form()
+        phone_number = form_data.get("From", "")
+        message = form_data.get("Body", "")
+        # Twilio format is usually "whatsapp:+5511999999999"
+        if phone_number.startswith("whatsapp:"):
+            phone_number = phone_number.replace("whatsapp:", "")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported content type")
+
+    if not phone_number or not message:
+        raise HTTPException(status_code=400, detail="Missing phone_number/From or message/Body")
+
     try:
-        response_text = process_message(session, data.phone_number, data.message)
-        # In a real integration, here you would call Twilio/Meta API to send the message back.
-        # For now, we just return the text response in the API.
+        # Run process_message synchronously (SQLModel/SQLite)
+        response_text = process_message(session, phone_number, message)
+        
+        if "application/x-www-form-urlencoded" in content_type:
+            # Twilio TwiML Response
+            xml_response = f'<?xml version="1.0" encoding="UTF-8"?><Response><Message><Body>{response_text}</Body></Message></Response>'
+            return Response(content=xml_response, media_type="application/xml")
+            
         return {"reply": response_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

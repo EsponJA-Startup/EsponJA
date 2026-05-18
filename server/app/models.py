@@ -24,6 +24,10 @@ class Professional(SQLModel, table=True):
     email: str | None = None
     password: str | None = None
     specialty: str | None = None
+    cep: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     profile_picture_url: str | None = None
     rating: float = Field(default=0.0)
     review_count: int = Field(default=0)
@@ -41,6 +45,7 @@ class Professional(SQLModel, table=True):
 
 class ServiceRequest(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    readable_id: str | None = Field(default=None, unique=True, index=True)
     
     # Foreign Keys
     client_id: uuid.UUID = Field(foreign_key="client.id")
@@ -59,6 +64,7 @@ class ServiceRequest(SQLModel, table=True):
     
     price: Decimal | None = Field(default=None, sa_column=Column(Numeric(10, 2)))
     payment_status: str = Field(default="Pendente")
+    cancellation_reason: str | None = None
     
     # Relationships
     client: Client = Relationship(back_populates="service_requests")

@@ -1,8 +1,12 @@
 import re
 from datetime import datetime
-from sqlmodel import Session, select
-from app.models import ChatSession, Client, ServiceRequest
+from sqlmodel import Session, select, or_
+from app.models import ChatSession, Client, ServiceRequest, Professional
 import uuid
+import random
+import string
+from app.utils.geo import get_coordinates, calculate_distance
+from app.utils.twilio import send_whatsapp_message
 
 # Define States
 WELCOME = "WELCOME"
@@ -16,6 +20,13 @@ ASK_ADDRESS = "ASK_ADDRESS"
 ASK_DATE = "ASK_DATE"
 ASK_TIME = "ASK_TIME"
 CONFIRMATION = "CONFIRMATION"
+CHOOSE_PROVIDER = "CHOOSE_PROVIDER"
+PROVIDER_DECISION = "PROVIDER_DECISION"
+CANCEL_MENU = "CANCEL_MENU"
+CANCEL_REASON = "CANCEL_REASON"
+
+def generate_readable_id() -> str:
+    return "SR-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 def get_or_create_session(db: Session, phone_number: str) -> ChatSession:
     chat_session = db.exec(select(ChatSession).where(ChatSession.phone_number == phone_number)).first()
@@ -35,13 +46,79 @@ def process_message(db: Session, phone_number: str, message: str) -> str:
     next_state = state
     data = dict(chat_session.data) # Copy data
     
-    # Simple cancel command
-    if msg.lower() in ["cancelar", "sair", "parar"]:
+    # Generic Cancel Command
+    if msg.lower() in ["cancelar", "sair", "parar"] and state not in [CANCEL_MENU, CANCEL_REASON]:
         chat_session.current_state = WELCOME
         chat_session.data = {}
         db.add(chat_session)
         db.commit()
-        return "Solicitação cancelada. Se quiser recomeçar, envie qualquer mensagem."
+        return "Operação cancelada. Se quiser iniciar, envie qualquer mensagem."
+        
+    # Intercept "cancelar serviço" command
+    if "cancelar serviço" in msg.lower() or "cancelar servico" in msg.lower():
+        # Look for active services for this phone number (either client or professional)
+        client = db.exec(select(Client).where(Client.whatsapp_number == phone_number)).first()
+        prof = db.exec(select(Professional).where(Professional.whatsapp_number == phone_number)).first()
+        
+        conditions = []
+        if client:
+            conditions.append(ServiceRequest.client_id == client.id)
+        if prof:
+            conditions.append(ServiceRequest.professional_id == prof.id)
+            
+        if not conditions:
+            return "Você não possui serviços ativos para cancelar."
+            
+        active_requests = db.exec(
+            select(ServiceRequest).where(or_(*conditions)).where(ServiceRequest.status.in_(["Pendente", "Aguardando Aceitação", "Em Andamento"]))
+        ).all()
+        
+        if not active_requests:
+            return "Você não possui serviços ativos para cancelar."
+            
+        chat_session.current_state = CANCEL_MENU
+        chat_session.data = {"active_ids": [r.readable_id for r in active_requests]}
+        db.add(chat_session)
+        db.commit()
+        
+        response = "Serviços ativos encontrados:\n"
+        for req in active_requests:
+            response += f"- ID: {req.readable_id} ({req.service_type} em {req.scheduled_date.strftime('%d/%m/%Y')} às {req.scheduled_time.strftime('%H:%M')})\n"
+        response += "\nPor favor, digite o ID do serviço que deseja cancelar:"
+        return response
+
+    if state == CANCEL_MENU:
+        active_ids = data.get("active_ids", [])
+        if msg.upper() in active_ids:
+            data["cancel_target"] = msg.upper()
+            chat_session.current_state = CANCEL_REASON
+            chat_session.data = data
+            db.add(chat_session)
+            db.commit()
+            return f"Você selecionou o serviço {msg.upper()}. Qual o motivo do cancelamento?"
+        else:
+            return "ID inválido. Por favor, digite um dos IDs listados acima (ex: SR-1234AB) ou 'sair' para abortar."
+
+    if state == CANCEL_REASON:
+        target_id = data.get("cancel_target")
+        req = db.exec(select(ServiceRequest).where(ServiceRequest.readable_id == target_id)).first()
+        if req:
+            req.status = "Cancelado"
+            req.cancellation_reason = msg
+            db.add(req)
+            db.commit()
+            
+            # Reset state
+            chat_session.current_state = WELCOME
+            chat_session.data = {}
+            db.add(chat_session)
+            db.commit()
+            return f"O serviço {target_id} foi cancelado com sucesso. Motivo registrado: {msg}"
+        else:
+            chat_session.current_state = WELCOME
+            db.add(chat_session)
+            db.commit()
+            return "Houve um erro ao cancelar o serviço (não encontrado). Retornando ao menu principal."
 
     if state == WELCOME:
         response = (
@@ -192,21 +269,78 @@ def process_message(db: Session, phone_number: str, message: str) -> str:
 
     elif state == CONFIRMATION:
         if msg == "1":
-            # Process and create ServiceRequest
+            response = "Buscando prestadores disponíveis na sua região (até 10km)..."
+            
+            # Geocode client address
+            coords = get_coordinates(data.get('address'), data.get('cep'))
+            if not coords:
+                next_state = WELCOME
+                data = {}
+                return "Desculpe, não conseguimos localizar o seu endereço exato. Por favor, tente recomeçar com um endereço mais preciso."
+                
+            client_lat, client_lon = coords
+            
+            # Find professionals
+            all_profs = db.exec(select(Professional)).all()
+            nearby_profs = []
+            
+            for prof in all_profs:
+                if prof.latitude is not None and prof.longitude is not None:
+                    dist = calculate_distance(client_lat, client_lon, prof.latitude, prof.longitude)
+                    if dist <= 10.0:
+                        nearby_profs.append({"prof": prof, "distance": dist})
+            
+            if not nearby_profs:
+                next_state = WELCOME
+                data = {}
+                return "Desculpe, no momento não há profissionais disponíveis num raio de 10km do seu endereço. Tente novamente mais tarde."
+                
+            # Sort by rating desc
+            nearby_profs.sort(key=lambda x: x["prof"].rating, reverse=True)
+            top_profs = nearby_profs[:5] # Max 5
+            
+            providers_data = []
+            response = "Encontramos os seguintes profissionais próximos a você:\n\n"
+            for idx, p in enumerate(top_profs):
+                providers_data.append(str(p["prof"].id))
+                response += f"{idx + 1}. {p['prof'].name} ({p['prof'].rating}★) - {p['distance']:.1f}km\n"
+            
+            response += "\nDigite o número do prestador que deseja escolher:"
+            data["available_providers"] = providers_data
+            data["client_lat"] = client_lat
+            data["client_lon"] = client_lon
+            next_state = CHOOSE_PROVIDER
+            
+        elif msg == "2":
+            next_state = WELCOME
+            data = {}
+            response = "Pedido cancelado. Envie qualquer mensagem para recomeçar."
+        else:
+            response = "Por favor, digite 1 para Confirmar ou 2 para Cancelar."
+
+    elif state == CHOOSE_PROVIDER:
+        providers = data.get("available_providers", [])
+        if msg.isdigit() and 1 <= int(msg) <= len(providers):
+            chosen_prof_id = uuid.UUID(providers[int(msg) - 1])
+            prof = db.exec(select(Professional).where(Professional.id == chosen_prof_id)).first()
+            
+            if not prof:
+                return "Erro ao encontrar prestador. Escolha novamente:"
+                
+            # Create client if doesn't exist
             client = db.exec(select(Client).where(Client.whatsapp_number == phone_number)).first()
             if not client:
-                # Create a dummy client
-                client = Client(
-                    name="Usuário WhatsApp",
-                    whatsapp_number=phone_number,
-                )
+                client = Client(name="Usuário WhatsApp", whatsapp_number=phone_number)
                 db.add(client)
                 db.commit()
                 db.refresh(client)
             
-            # Create request
+            # Create ServiceRequest
+            readable_id = generate_readable_id()
             service_request = ServiceRequest(
+                readable_id=readable_id,
                 client_id=client.id,
+                professional_id=prof.id,
                 service_type=data.get('service_type'),
                 home_type=data.get('home_type'),
                 bedrooms=data.get('bedrooms'),
@@ -216,21 +350,80 @@ def process_message(db: Session, phone_number: str, message: str) -> str:
                 address=data.get('address'),
                 scheduled_date=datetime.fromisoformat(data.get('scheduled_date')).date() if 'T' in data.get('scheduled_date') else datetime.strptime(data.get('scheduled_date'), "%Y-%m-%d").date(),
                 scheduled_time=datetime.strptime(data.get('scheduled_time'), "%H:%M:%S").time(),
-                status="Pendente"
+                status="Aguardando Aceitação"
             )
             db.add(service_request)
             db.commit()
             
-            next_state = WELCOME
-            data = {}
-            response = "Pedido confirmado com sucesso! Entraremos em contato em breve para combinar o valor e o profissional responsável."
+            # Send ticket to provider (Simulated)
+            prof_session = get_or_create_session(db, prof.whatsapp_number)
+            prof_session.current_state = PROVIDER_DECISION
+            prof_session.data = {
+                "pending_service_id": readable_id,
+                "ticket_time": datetime.utcnow().isoformat()
+            }
+            db.add(prof_session)
+            db.commit()
             
-        elif msg == "2":
+            ticket_msg = (
+                f"=== TICKET DE SERVIÇO ({readable_id}) ===\n"
+                f"Cliente WhatsApp: {client.whatsapp_number}\n"
+                f"Serviço: {service_request.service_type}\n"
+                f"Data: {service_request.scheduled_date.strftime('%d/%m/%Y')} às {service_request.scheduled_time.strftime('%H:%M')}\n"
+                f"Endereço: {service_request.address} (CEP: {service_request.cep})\n"
+                "Para aceitar, digite 1. Para recusar, digite 2."
+            )
+            # Use real API to send proactive message
+            send_whatsapp_message(prof.whatsapp_number, ticket_msg)
+            
             next_state = WELCOME
             data = {}
-            response = "Pedido cancelado. Envie qualquer mensagem para recomeçar."
+            response = f"Pedido {readable_id} enviado para {prof.name}! O prestador tem 5 minutos para aceitar. Se não aceitar, o pedido será recusado."
         else:
-            response = "Por favor, digite 1 para Confirmar ou 2 para Cancelar."
+            response = f"Opção inválida. Digite um número de 1 a {len(providers)}:"
+
+    elif state == PROVIDER_DECISION:
+        pending_id = data.get("pending_service_id")
+        ticket_time_str = data.get("ticket_time")
+        
+        req = db.exec(select(ServiceRequest).where(ServiceRequest.readable_id == pending_id)).first()
+        
+        if not req or req.status != "Aguardando Aceitação":
+            next_state = WELCOME
+            data = {}
+            return "Você não tem serviços pendentes ou este serviço já foi cancelado."
+            
+        ticket_time = datetime.fromisoformat(ticket_time_str)
+        if (datetime.utcnow() - ticket_time).total_seconds() > 300: # 5 minutes
+            req.status = "Recusado"
+            db.add(req)
+            db.commit()
+            next_state = WELCOME
+            data = {}
+            client_msg = f"O prestador demorou para responder e o serviço {req.readable_id} expirou. Envie qualquer mensagem para tentar novamente."
+            send_whatsapp_message(req.client.whatsapp_number, client_msg)
+            return "O tempo de 5 minutos expirou. O serviço foi automaticamente recusado."
+            
+        if msg == "1":
+            req.status = "Em Andamento"
+            db.add(req)
+            db.commit()
+            next_state = WELCOME
+            data = {}
+            client_msg = f"Seu serviço {req.readable_id} foi ACEITO pelo prestador! Entre em contato com ele pelo número {phone_number}."
+            send_whatsapp_message(req.client.whatsapp_number, client_msg)
+            response = f"Você aceitou o serviço {req.readable_id}! O número do cliente é {req.client.whatsapp_number}. Pode entrar em contato com ele diretamente."
+        elif msg == "2":
+            req.status = "Recusado"
+            db.add(req)
+            db.commit()
+            next_state = WELCOME
+            data = {}
+            client_msg = f"Infelizmente o prestador recusou o serviço {req.readable_id}. Envie qualquer mensagem para tentar novamente."
+            send_whatsapp_message(req.client.whatsapp_number, client_msg)
+            response = f"Você recusou o serviço {req.readable_id}."
+        else:
+            response = "Por favor, digite 1 para Aceitar ou 2 para Recusar o serviço."
 
     # Update session state and data
     chat_session.current_state = next_state
