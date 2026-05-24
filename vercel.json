@@ -1,15 +1,10 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
-    }
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build" },
+    { "src": "server/index.py", "use": "@vercel/python" }
   ],
-  "functions": {
-    "api/**/*.py": {
-      "includeFiles": "server/**"
-    }
-  }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/server/index.py" },
+    { "src": "/(.*)", "dest": "/dist/$1" }
+  ]
 }
