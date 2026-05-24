@@ -1,6 +1,5 @@
 {
-  "framework": "vite",
-  "buildCommand": "cd client && npm install && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
