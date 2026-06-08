@@ -9,6 +9,7 @@ import ProviderHome from './pages/ProviderHome';
 import ServiceRequest from './pages/ServiceRequest';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import VerifyEmail from './pages/VerifyEmail';
 import './App.css'; 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verificar-email" element={<VerifyEmail />} />
           <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['customer']}><ClientDashboard /></ProtectedRoute>} />
           <Route path="/client/home" element={<ProtectedRoute allowedRoles={['customer']}><ClientHome /></ProtectedRoute>} />
           <Route path="/provider/home" element={<ProtectedRoute allowedRoles={['provider']}><ProviderHome /></ProtectedRoute>} />

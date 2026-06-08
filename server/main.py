@@ -15,6 +15,7 @@ from slowapi.errors import RateLimitExceeded
 import bcrypt
 import httpx
 import uuid
+import secrets
 from datetime import date, time
 
 from app.database import create_db_and_tables, get_session
@@ -85,6 +86,9 @@ class WaitlistRequest(BaseModel):
 class AdminLoginRequest(BaseModel):
     password: str
 
+class VerifyEmailRequest(BaseModel):
+    token: str
+
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID | None = None
     service_type: str = Field(max_length=100)
@@ -115,6 +119,7 @@ class ServiceRequestUpdate(BaseModel):
 async def register(request: Request, data: RegisterRequest, session: Session = Depends(get_session)):
     full_name = f"{data.name} {data.last_name}".strip()
     hashed_pwd = get_password_hash(data.password)
+    email_token = secrets.token_urlsafe(32)
     
     if data.role == "provider":
         # Check if email exists
@@ -127,7 +132,9 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             email=data.email,
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
-            specialty=data.specialty
+            specialty=data.specialty,
+            verification_token=email_token,
+            is_verified=False
         )
         session.add(new_user)
     else:
@@ -140,7 +147,9 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             name=full_name,
             email=data.email,
             whatsapp_number=data.whatsapp_number,
-            password=hashed_pwd
+            password=hashed_pwd,
+            verification_token=email_token, 
+            is_verified=False
         )
         session.add(new_user)
         
@@ -152,7 +161,8 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             await client.post("http://localhost:5678/webhook/registro-esponja", json={
                 "email": new_user.email,
                 "name": new_user.name,
-                "role": data.role
+                "role": data.role,
+                "verification_token": new_user.verification_token
             })
     except Exception as e:
         print(f"Erro ao disparar gatilho de e-mail no n8n: {e}")
@@ -175,6 +185,8 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     client = session.exec(select(Client).where(Client.email == data.email)).first()
     if client:
         if verify_password(data.password, client.password):
+            if not client.email_verified: 
+                raise HTTPException(status_code=403, detail="Por favor, verifique seu e-mail antes de fazer login.")
             access_token = create_access_token(data={"sub": str(client.id), "role": "customer"})
             response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
             return {
@@ -190,6 +202,8 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     professional = session.exec(select(Professional).where(Professional.email == data.email)).first()
     if professional:
         if verify_password(data.password, professional.password):
+            if not professional.email_verified: 
+                raise HTTPException(status_code=403, detail="Por favor, verifique seu e-mail antes de fazer login.")
             access_token = create_access_token(data={"sub": str(professional.id), "role": "provider"})
             response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
             return {
@@ -202,6 +216,29 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
         verify_password(data.password, DUMMY_PASSWORD_HASH)
         
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+@app.post("/api/auth/verify")
+@limiter.limit("5/minute")
+def verify_email(request: Request, data: VerifyEmailRequest, session: Session = Depends(get_session)):
+    client = session.exec(select(Client).where(Client.verification_token == data.token)).first()
+    if client:
+        client.email_verified = True
+        client.verification_token = None
+        session.add(client)
+        session.commit()
+        return {"message": "Email verificado com sucesso!"}
+        
+    professional = session.exec(select(Professional).where(Professional.verification_token == data.token)).first()
+    if professional:
+        professional.email_verified = True
+        professional.verification_token = None 
+        session.add(professional)
+        session.commit()
+        return {"message": "Email verificado com sucesso!"}
+        
+    raise HTTPException(status_code=400, detail="Token inválido ou expirado.")
+
 
 @app.post("/api/auth/logout")
 def logout(response: Response):
