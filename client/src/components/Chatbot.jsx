@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import './Chatbot.css';
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, text: 'Olá! Sou o assistente virtual da EsponJA. Como posso ajudar você hoje?', sender: 'bot' }
   ]);
@@ -29,6 +31,7 @@ export default function Chatbot() {
     const newUserMsg = { id: Date.now(), text: userMsgText, sender: 'user' };
     setMessages((prev) => [...prev, newUserMsg]);
     setInputMessage('');
+    setIsLoading(true);
 
     try {
       const response = await fetch('http://localhost:8000/api/chat', {
@@ -57,6 +60,8 @@ export default function Chatbot() {
         ...prev, 
         { id: Date.now() + 1, text: 'Desculpe, não consegui me conectar ao servidor.', sender: 'bot' }
       ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -82,9 +87,20 @@ export default function Chatbot() {
           <div className="chatbot-messages">
             {messages.map((msg) => (
               <div key={msg.id} className={`chat-message ${msg.sender}`}>
-                {msg.text}
+                {msg.sender === 'bot' ? (
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                ) : (
+                  msg.text
+                )}
               </div>
             ))}
+            {isLoading && (
+              <div className="typing-indicator">
+                <div className="typing-dot"></div>
+                <div className="typing-dot"></div>
+                <div className="typing-dot"></div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
