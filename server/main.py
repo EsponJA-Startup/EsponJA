@@ -20,6 +20,7 @@ from app.database import create_db_and_tables, get_session
 from app.models import Client, Professional, Waitlist, ServiceRequest
 from app.auth import create_access_token, get_current_user
 from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse
+from app.utils.chatbot import generate_chat_response
 
 DUMMY_PASSWORD_HASH = os.getenv("DUMMY_PASSWORD_HASH", "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjIQqiRQYq")
 
@@ -81,6 +82,9 @@ class WaitlistRequest(BaseModel):
 
 class AdminLoginRequest(BaseModel):
     password: str
+
+class ChatMessage(BaseModel):
+    message: str
 
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID | None = None
@@ -334,3 +338,15 @@ def get_clients(
         raise HTTPException(status_code=403, detail="Not authorized")
     clients = session.exec(select(Client)).all()
     return clients
+
+@app.post("/api/chat")
+@limiter.limit("20/minute")
+def chat_endpoint(request: Request, data: ChatMessage):
+    system_context = (
+        "Você é o assistente virtual da EsponJÁ, uma plataforma de agendamento de serviços domésticos. "
+        "Seu objetivo é ajudar os clientes a entender nossos serviços e prepará-los para agendar. "
+        "Seja amigável e direto."
+    )
+    full_message = f"{system_context}\n\nUsuário: {data.message}"
+    response_text = generate_chat_response(full_message)
+    return {"reply": response_text}

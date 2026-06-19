@@ -20,23 +20,44 @@ export default function Chatbot() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
+    const userMsgText = inputMessage;
     // Adiciona a mensagem do usuário na tela
-    const newUserMsg = { id: Date.now(), text: inputMessage, sender: 'user' };
+    const newUserMsg = { id: Date.now(), text: userMsgText, sender: 'user' };
     setMessages((prev) => [...prev, newUserMsg]);
     setInputMessage('');
 
-    // TODO (Issue 3): Integrar com o backend real.
-    // Por enquanto, simulamos uma resposta:
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMsgText }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages((prev) => [
+          ...prev, 
+          { id: Date.now() + 1, text: data.reply, sender: 'bot' }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev, 
+          { id: Date.now() + 1, text: 'Desculpe, ocorreu um erro na comunicação com o servidor.', sender: 'bot' }
+        ]);
+      }
+    } catch (error) {
+      console.error("Erro ao enviar mensagem para a API:", error);
       setMessages((prev) => [
         ...prev, 
-        { id: Date.now() + 1, text: 'Entendi! Estamos configurando minha inteligência. Logo estarei apto a agendar serviços para você!', sender: 'bot' }
+        { id: Date.now() + 1, text: 'Desculpe, não consegui me conectar ao servidor.', sender: 'bot' }
       ]);
-    }, 1000);
+    }
   };
 
   return (
