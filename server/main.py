@@ -83,8 +83,12 @@ class WaitlistRequest(BaseModel):
 class AdminLoginRequest(BaseModel):
     password: str
 
+class ChatMessageItem(BaseModel):
+    role: str
+    content: str
+
 class ChatMessage(BaseModel):
-    message: str
+    history: list[ChatMessageItem]
 
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID | None = None
@@ -341,12 +345,6 @@ def get_clients(
 
 @app.post("/api/chat")
 @limiter.limit("20/minute")
-def chat_endpoint(request: Request, data: ChatMessage):
-    system_context = (
-        "Você é o assistente virtual da EsponJÁ, uma plataforma de agendamento de serviços domésticos. "
-        "Seu objetivo é ajudar os clientes a entender nossos serviços e prepará-los para agendar. "
-        "Seja amigável e direto."
-    )
-    full_message = f"{system_context}\n\nUsuário: {data.message}"
-    response_text = generate_chat_response(full_message)
+def chat_endpoint(request: Request, data: ChatMessage, session: Session = Depends(get_session)):
+    response_text = generate_chat_response(data.history, db_session=session)
     return {"reply": response_text}

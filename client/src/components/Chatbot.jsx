@@ -34,12 +34,18 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
+      const historyToSend = messages.map(msg => ({
+        role: msg.sender === 'bot' ? 'model' : 'user',
+        content: msg.text
+      }));
+      historyToSend.push({ role: 'user', content: userMsgText });
+
       const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userMsgText }),
+        body: JSON.stringify({ history: historyToSend }),
       });
 
       if (response.ok) {
