@@ -4,11 +4,18 @@ import ReactMarkdown from 'react-markdown';
 import './Chatbot.css';
 
 export default function Chatbot() {
+  const userRole = localStorage.getItem('user_role');
+  const isCustomer = userRole === 'customer';
+  const initialMessage = isCustomer 
+    ? 'Olá! Sou o assistente virtual da EsponJA. Como posso ajudar você hoje?'
+    : 'Olá! Vimos que você não está logado no nosso site. Se já tiver uma conta de cliente, basta realizar o login. Caso contrário, registre-se e torne-se nosso cliente para poder agendar serviços por aqui!';
+
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasBooked, setHasBooked] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, text: 'Olá! Sou o assistente virtual da EsponJA. Como posso ajudar você hoje?', sender: 'bot' }
+    { id: 1, text: initialMessage, sender: 'bot' }
   ]);
   const messagesEndRef = useRef(null);
 
@@ -22,6 +29,12 @@ export default function Chatbot() {
     scrollToBottom();
   }, [messages]);
 
+  const handleRestart = () => {
+    setMessages([{ id: Date.now(), text: initialMessage, sender: 'bot' }]);
+    setHasBooked(false);
+    setInputMessage('');
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
@@ -34,18 +47,36 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      const historyToSend = messages.map(msg => ({
-        role: msg.sender === 'bot' ? 'model' : 'user',
-        content: msg.text
-      }));
+      let historyToSend = messages
+        .filter(msg => !msg.isError)
+        .map(msg => ({
+          role: msg.sender === 'bot' ? 'model' : 'user',
+          content: msg.text
+        }));
+      
       historyToSend.push({ role: 'user', content: userMsgText });
+
+      // A API do Gemini exige que o histórico comece com 'user' e alterne
+      let validHistory = [];
+      for (const msg of historyToSend) {
+        if (validHistory.length === 0) {
+          if (msg.role === 'user') validHistory.push(msg);
+        } else {
+          if (validHistory[validHistory.length - 1].role !== msg.role) {
+            validHistory.push(msg);
+          } else {
+            validHistory[validHistory.length - 1].content += "\n" + msg.content;
+          }
+        }
+      }
 
       const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ history: historyToSend }),
+        credentials: 'include',
+        body: JSON.stringify({ history: validHistory }),
       });
 
       if (response.ok) {
@@ -54,17 +85,20 @@ export default function Chatbot() {
           ...prev, 
           { id: Date.now() + 1, text: data.reply, sender: 'bot' }
         ]);
+        if (data.booked) {
+          setHasBooked(true);
+        }
       } else {
         setMessages((prev) => [
           ...prev, 
-          { id: Date.now() + 1, text: 'Desculpe, ocorreu um erro na comunicação com o servidor.', sender: 'bot' }
+          { id: Date.now() + 1, text: 'Desculpe, ocorreu um erro na comunicação com o servidor.', sender: 'bot', isError: true }
         ]);
       }
     } catch (error) {
       console.error("Erro ao enviar mensagem para a API:", error);
       setMessages((prev) => [
         ...prev, 
-        { id: Date.now() + 1, text: 'Desculpe, não consegui me conectar ao servidor.', sender: 'bot' }
+        { id: Date.now() + 1, text: 'Desculpe, não consegui me conectar ao servidor.', sender: 'bot', isError: true }
       ]);
     } finally {
       setIsLoading(false);
@@ -110,23 +144,37 @@ export default function Chatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          <form className="chatbot-input-area" onSubmit={handleSendMessage}>
-            <input
-              type="text"
-              className="chatbot-input"
-              placeholder="Digite sua mensagem..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-            />
-            <button 
-              type="submit" 
-              className="chatbot-send-btn" 
-              disabled={!inputMessage.trim()}
-              aria-label="Enviar"
-            >
-              <Send size={18} />
-            </button>
-          </form>
+          {hasBooked ? (
+            <div className="chatbot-restart-area" style={{ padding: '15px', borderTop: '1px solid #eee', background: 'var(--bg-light)' }}>
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                onClick={handleRestart}
+                style={{ width: '100%' }}
+              >
+                Nova Reserva (Reiniciar Conversa)
+              </button>
+            </div>
+          ) : (
+            <form className="chatbot-input-area" onSubmit={handleSendMessage}>
+              <input
+                type="text"
+                className="chatbot-input"
+                placeholder={isCustomer ? "Digite sua mensagem..." : "Faça login para conversar"}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                disabled={!isCustomer}
+              />
+              <button 
+                type="submit" 
+                className="chatbot-send-btn" 
+                disabled={!inputMessage.trim() || !isCustomer}
+                aria-label="Enviar"
+              >
+                <Send size={18} />
+              </button>
+            </form>
+          )}
         </div>
       )}
 

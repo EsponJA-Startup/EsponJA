@@ -14,48 +14,41 @@ def get_gemini_client():
 SYSTEM_INSTRUCTION = """Você é o assistente virtual da EsponJÁ, uma plataforma de agendamento de serviços domésticos. 
 Seu objetivo é ajudar os clientes a agendar serviços como faxina, limpeza, etc.
 Você deve SEMPRE coletar as seguintes informações do usuário antes de agendar o serviço:
-1. Nome do cliente
-2. Número do WhatsApp do cliente
-3. Tipo de serviço (ex: Faxina Padrão, Faxina Pesada, Limpeza Pós-Obra, etc)
-4. Tipo do imóvel (Casa, Apartamento, etc)
-5. Quantidade de quartos (ex: 2 quartos)
-6. Quantidade de banheiros (ex: 1 banheiro)
-7. Se possui pets (Sim ou Não)
-8. CEP
-9. Endereço completo (Rua, número, bairro, cidade)
-10. Data desejada para o serviço (formato AAAA-MM-DD)
-11. Horário desejado para o serviço (formato HH:MM)
+1. Tipo de serviço (ex: Faxina Padrão, Faxina Pesada, Limpeza Pós-Obra, etc)
+2. Tipo do imóvel (Casa, Apartamento, etc)
+3. Quantidade de quartos (ex: 2 quartos)
+4. Quantidade de banheiros (ex: 1 banheiro)
+5. Se possui pets (Sim ou Não)
+6. CEP
+7. Endereço completo (Rua, número, bairro, cidade)
+8. Data desejada para o serviço (formato AAAA-MM-DD)
+9. Horário desejado para o serviço (formato HH:MM)
 
 Faça uma pergunta por vez ou agrupe no máximo duas, para que a conversa fique natural. Não peça todos os dados de uma vez.
-Quando (e somente quando) você tiver coletado TODAS as 11 informações acima de forma clara, chame a função `create_booking` para criar o agendamento no sistema. Após a função ser chamada com sucesso, avise o cliente que o agendamento foi concluído e que um profissional entrará em contato.
+Quando (e somente quando) você tiver coletado TODAS as 9 informações acima de forma clara, chame a função `create_booking` para criar o agendamento no sistema. Após a função ser chamada com sucesso, avise o cliente que o agendamento foi concluído e que um profissional entrará em contato.
 """
 
-def generate_chat_response(history: list, db_session: Session) -> str:
+def generate_chat_response(history: list, client_id: str, db_session: Session) -> dict:
     """
     history é uma lista de objetos ChatMessageItem com role e content.
     """
+    booking_created = {"status": False}
     try:
         client = get_gemini_client()
         
         # Define a função de Function Calling que será usada pelo Gemini
-        def create_booking(name: str, whatsapp_number: str, service_type: str, home_type: str, bedrooms: str, bathrooms: str, has_pets: bool, cep: str, address: str, scheduled_date: str, scheduled_time: str) -> str:
+        def create_booking(service_type: str, home_type: str, bedrooms: str, bathrooms: str, has_pets: bool, cep: str, address: str, scheduled_date: str, scheduled_time: str) -> str:
             """Cria um agendamento de serviço na plataforma EsponJÁ e retorna sucesso ou erro."""
             try:
-                # 1. Verifica se o cliente já existe pelo whatsapp, senão cria
-                db_client = db_session.exec(select(Client).where(Client.whatsapp_number == whatsapp_number)).first()
-                if not db_client:
-                    db_client = Client(name=name, whatsapp_number=whatsapp_number)
-                    db_session.add(db_client)
-                    db_session.commit()
-                    db_session.refresh(db_client)
+                import uuid
                 
-                # 2. Converte data e hora
+                # 1. Converte data e hora
                 dt_date = datetime.strptime(scheduled_date, "%Y-%m-%d").date()
                 dt_time = datetime.strptime(scheduled_time, "%H:%M").time()
                 
-                # 3. Cria a ServiceRequest
+                # 2. Cria a ServiceRequest
                 request = ServiceRequest(
-                    client_id=db_client.id,
+                    client_id=uuid.UUID(client_id),
                     service_type=service_type,
                     home_type=home_type,
                     bedrooms=bedrooms,
@@ -68,6 +61,7 @@ def generate_chat_response(history: list, db_session: Session) -> str:
                 )
                 db_session.add(request)
                 db_session.commit()
+                booking_created["status"] = True
                 return "Agendamento criado com sucesso!"
             except Exception as e:
                 print(f"Erro no banco de dados ao criar booking: {e}")
@@ -97,8 +91,12 @@ def generate_chat_response(history: list, db_session: Session) -> str:
         # Envia a nova mensagem do usuário. A API cuida automaticamente de invocar a função se necessário.
         response = chat.send_message(latest_content.parts[0].text)
         
-        return response.text
+        return {"text": response.text, "booked": booking_created["status"]}
         
     except Exception as e:
+        import traceback
+        with open("gemini_error.txt", "w", encoding="utf-8") as f:
+            f.write(str(e) + "\n")
+            traceback.print_exc(file=f)
         print(f"Erro ao comunicar com Gemini API: {e}")
-        return "Desculpe, ocorreu um erro ao processar sua mensagem."
+        return {"text": "Desculpe, ocorreu um erro ao processar sua mensagem.", "booked": False}

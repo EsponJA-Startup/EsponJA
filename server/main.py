@@ -345,6 +345,8 @@ def get_clients(
 
 @app.post("/api/chat")
 @limiter.limit("20/minute")
-def chat_endpoint(request: Request, data: ChatMessage, session: Session = Depends(get_session)):
-    response_text = generate_chat_response(data.history, db_session=session)
-    return {"reply": response_text}
+def chat_endpoint(request: Request, data: ChatMessage, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "customer":
+        return {"reply": "Você precisa estar logado como cliente para usar o assistente virtual.", "booked": False}
+    result = generate_chat_response(data.history, current_user["user_id"], db_session=session)
+    return {"reply": result["text"], "booked": result["booked"]}
