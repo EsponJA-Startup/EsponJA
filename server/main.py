@@ -320,6 +320,15 @@ def delete_service_request(request_id: uuid.UUID, session: Session = Depends(get
     session.commit()
     return {"message": "Service request deleted successfully"}
 
+@app.get("/api/professionals/me", response_model=ProfessionalResponse)
+def get_professional_me(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "provider":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    professional = session.get(Professional, uuid.UUID(current_user["user_id"]))
+    if not professional:
+        raise HTTPException(status_code=404, detail="Professional not found")
+    return professional
+
 @app.get("/api/professionals", response_model=list[ProfessionalResponse])
 def get_professionals(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":
