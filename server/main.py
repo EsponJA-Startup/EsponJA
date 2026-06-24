@@ -156,7 +156,7 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     if admin_email and admin_password and data.email == admin_email and hmac.compare_digest(data.password, admin_password):
         access_token = create_access_token(data={"sub": "admin", "role": "admin"})
         response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
-        return {"message": "Admin login successful", "role": "admin", "user_id": "admin"}
+        return {"message": "Admin login successful", "role": "admin", "user_id": "admin", "name": "Administrador"}
 
     # Check clients
     client = session.exec(select(Client).where(Client.email == data.email)).first()
@@ -167,7 +167,8 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
             return {
                 "message": "Login successful", 
                 "role": "customer", 
-                "user_id": str(client.id)
+                "user_id": str(client.id),
+                "name": client.name
             }
     else:
         # Dummy check to equalize timing for user enumeration prevention
@@ -182,7 +183,8 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
             return {
                 "message": "Login successful", 
                 "role": "provider", 
-                "user_id": str(professional.id)
+                "user_id": str(professional.id),
+                "name": professional.name
             }
     else:
         # Dummy check to equalize timing for user enumeration prevention

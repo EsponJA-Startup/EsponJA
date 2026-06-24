@@ -79,3 +79,16 @@
     display: none;
   }
 }
+
+.nav-greeting {
+  font-weight: 600;
+  color: var(--primary);
+  margin-right: 1rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-light);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+}

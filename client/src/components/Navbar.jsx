@@ -9,6 +9,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const userRole = localStorage.getItem('user_role');
+  const userName = localStorage.getItem('user_name');
 
   const handleLogout = async () => {
     try {
@@ -17,6 +18,7 @@ export default function Navbar() {
       console.error("Logout failed", err);
     }
     localStorage.removeItem('user_role');
+    localStorage.removeItem('user_name');
     window.location.href = '/login';
   };
 
@@ -64,6 +66,10 @@ export default function Navbar() {
                   <Link to="/provider/home" className="nav-link hide-mobile">Dashboard</Link>
                   <Link to="/provider/home" className="nav-link hide-mobile">Meus Serviços</Link>
                 </>
+              )}
+              
+              {userName && (
+                <span className="nav-greeting hide-mobile">Olá, {userName.split(' ')[0]}</span>
               )}
               <button onClick={handleLogout} className="btn btn-secondary">Sair</button>
             </>
