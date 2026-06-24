@@ -9,6 +9,7 @@ export default function ProviderHome() {
   const [activeTab, setActiveTab] = useState('solicitacoes');
   const [professionalData, setProfessionalData] = useState(null);
   const [requests, setRequests] = useState([]);
+  const [hiddenRequests, setHiddenRequests] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = async () => {
@@ -47,6 +48,10 @@ export default function ProviderHome() {
     }
   };
 
+  const handleRejectRequest = (id) => {
+    setHiddenRequests(prev => new Set(prev).add(id));
+  };
+
   if (loading) {
     return (
       <div className="provider-home">
@@ -59,11 +64,12 @@ export default function ProviderHome() {
     );
   }
 
-  const pendingRequests = requests.filter(req => req.status === 'Pendente');
+  const pendingRequests = requests.filter(req => req.status === 'Pendente' && !hiddenRequests.has(req.id));
   const scheduledRequests = requests.filter(req => req.status === 'Em Andamento');
 
   const fallbackName = localStorage.getItem('user_name') || 'Profissional';
   const firstName = professionalData ? professionalData.name.split(' ')[0] : fallbackName.split(' ')[0];
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=003366&color=fff&size=256`;
 
   return (
     <div className="provider-home">
@@ -71,7 +77,7 @@ export default function ProviderHome() {
       <main className="dashboard-content container">
         <header className="provider-header">
           <div className="provider-profile">
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt={firstName} className="provider-avatar" />
+            <img src={avatarUrl} alt={firstName} className="provider-avatar" />
             <div className="provider-info">
               <h1>Olá, {firstName}! 👋</h1>
               <div className="provider-stats">
@@ -164,7 +170,7 @@ export default function ProviderHome() {
                       <p><strong>Data/Hora:</strong> {req.scheduled_date} às {req.scheduled_time?.substring(0, 5) || 'A definir'}</p>
                     </div>
                     <div className="req-actions">
-                      <button className="btn btn-outline btn-sm">Recusar</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleRejectRequest(req.id)}>Recusar</button>
                       <button className="btn btn-primary btn-sm" onClick={() => handleAcceptRequest(req.id)}>
                         <CheckCircle size={16} /> Aceitar
                       </button>
