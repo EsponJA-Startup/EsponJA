@@ -242,10 +242,24 @@ def get_service_requests(session: Session = Depends(get_session), current_user: 
     
     if role == "admin":
         requests = session.exec(select(ServiceRequest)).all()
-        return [ServiceRequestResponse(**r.model_dump()) for r in requests]
+        result = []
+        for r in requests:
+            d = r.model_dump()
+            if r.professional_id:
+                p = session.get(Professional, r.professional_id)
+                d["professional_name"] = p.name if p else None
+            result.append(ServiceRequestResponse(**d))
+        return result
     elif role == "customer":
         requests = session.exec(select(ServiceRequest).where(ServiceRequest.client_id == uuid.UUID(user_id))).all()
-        return [ServiceRequestResponse(**r.model_dump()) for r in requests]
+        result = []
+        for r in requests:
+            d = r.model_dump()
+            if r.professional_id:
+                p = session.get(Professional, r.professional_id)
+                d["professional_name"] = p.name if p else None
+            result.append(ServiceRequestResponse(**d))
+        return result
     else: # provider
         requests = session.exec(select(ServiceRequest).where(
             (ServiceRequest.status == "Pendente") | (ServiceRequest.professional_id == uuid.UUID(user_id))
@@ -290,6 +304,8 @@ def update_service_request(request_id: uuid.UUID, update_data: ServiceRequestUpd
             raise HTTPException(status_code=403, detail="Not authorized to modify another professional's request")
         elif not db_request.professional_id:
             # A provider can only accept a pending request
+            if db_request.status != "Pendente":
+                raise HTTPException(status_code=400, detail="Este serviço já foi aceito por outro profissional.")
             if update_data.professional_id != uuid.UUID(user_id) or update_data.status != "Em Andamento":
                 raise HTTPException(status_code=403, detail="Providers can only accept pending requests")
             
@@ -319,6 +335,15 @@ def delete_service_request(request_id: uuid.UUID, session: Session = Depends(get
     session.delete(db_request)
     session.commit()
     return {"message": "Service request deleted successfully"}
+
+@app.get("/api/professionals/me", response_model=ProfessionalResponse)
+def get_professional_me(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "provider":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    professional = session.get(Professional, uuid.UUID(current_user["user_id"]))
+    if not professional:
+        raise HTTPException(status_code=404, detail="Professional not found")
+    return professional
 
 @app.get("/api/professionals", response_model=list[ProfessionalResponse])
 def get_professionals(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):

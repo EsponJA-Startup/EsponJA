@@ -40,6 +40,7 @@ class ServiceRequestResponse(BaseModel):
     scheduled_time: time
     price: Decimal | None = None
     payment_status: str
+    professional_name: str | None = None
 
 class ServiceRequestPublicResponse(BaseModel):
     id: uuid.UUID
