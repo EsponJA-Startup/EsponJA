@@ -1,0 +1,71 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "registro-esponja",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4900bdbb-2acf-45bc-9e9e-9fb893219a36",
+      "name": "Webhook",
+      "webhookId": "5e4c96b5-6326-4cc8-89f8-588f3e1381a3"
+    },
+    {
+      "parameters": {
+        "fromEmail": "bernardo06pereiras@gmail.com",
+        "toEmail": "={{ $json.body.email }}",
+        "subject": "=Bem-vindo ao EsponJA, {{ $json.body.name }}!",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">\n    \n    <h2 style=\"color: #2c3e50; text-align: center;\">Bem-vindo ao EsponJA! 🧽</h2>\n    \n    <p style=\"color: #555; font-size: 16px;\">Olá, <strong>{{ $json.body.name }}</strong>!</p>\n    \n    <p style=\"color: #555; font-size: 16px;\">Estamos muito felizes em ter você na nossa plataforma como {{ $json.body.role == 'provider' ? 'profissional' : 'cliente' }}.</p>\n    \n    <p style=\"color: #555; font-size: 16px;\">Para garantir a segurança da sua conta e liberar o seu acesso, precisamos que você confirme este endereço de e-mail clicando no botão abaixo:</p>\n    \n    <div style=\"text-align: center; margin: 30px 0;\">\n        <a href=\"http://localhost:5173/verificar-email?token={{ $json.body.verification_token }}\" \n           style=\"background-color: #f39c12; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;\">\n           Confirmar Meu E-mail\n        </a>\n    </div>\n    \n    <p style=\"color: #777; font-size: 14px; text-align: center;\">\n        Se você não criou essa conta, apenas ignore este e-mail.\n    </p>\n    <hr style=\"border: 0; border-top: 1px solid #eee; margin: 20px 0;\">\n    <p style=\"color: #999; font-size: 12px; text-align: center;\">Equipe EsponJA</p>\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1055b9fd-ba2d-46eb-b4ba-59625d53a0c0",
+      "name": "Send an Email",
+      "webhookId": "8051468f-98a9-45ee-aa5c-cf0a3140a53e",
+      "credentials": {
+        "smtp": {
+          "id": "AOkKKXQ9evhzgr63",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c9464c78-3bee-4ebc-9b11-4aee86fe8a32",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "844b8080ba9b8c5b4dc7c3fdbebc0b0146519f97cbad1d1363709104c70f6b15"
+  },
+  "id": "449Rkgzubij4miJ6",
+  "tags": []
+}

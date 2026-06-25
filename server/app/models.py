@@ -11,6 +11,8 @@ class Client(SQLModel, table=True):
     whatsapp_number: str
     email: str | None = None
     password: str | None = None
+    email_verified: bool = Field(default=False)
+    verification_token: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Relationship
@@ -23,6 +25,8 @@ class Professional(SQLModel, table=True):
     whatsapp_number: str | None = None
     email: str | None = None
     password: str | None = None
+    email_verified: bool = Field(default=False)
+    verification_token: str | None = None
     specialty: str | None = None
     profile_picture_url: str | None = None
     rating: float = Field(default=0.0)

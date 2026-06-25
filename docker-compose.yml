@@ -1,0 +1,38 @@
+services:
+  # Banco de dados que o n8n usará para guardar seus fluxos e configurações
+  n8n_db:
+    image: postgres:16-alpine
+    container_name: esponja_n8n_db
+    restart: always
+    environment:
+      - POSTGRES_USER=n8n_user
+      - POSTGRES_PASSWORD=n8n_password
+      - POSTGRES_DB=n8n_data
+    volumes:
+      - n8n_db_storage:/var/lib/postgresql/data
+
+  # O motor de automação n8n
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: esponja_n8n_app
+    restart: always
+    ports:
+      - "5678:5678" # Abre a porta 5678
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_DATABASE=n8n_data
+      - DB_POSTGRESDB_HOST=n8n_db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_USER=n8n_user
+      - DB_POSTGRESDB_PASSWORD=n8n_password
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=esponja_segura
+    links:
+      - n8n_db
+    volumes:
+      - n8n_app_storage:/home/node/.n8n
+
+volumes:
+  n8n_db_storage:
+  n8n_app_storage:

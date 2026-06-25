@@ -13,13 +13,17 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import bcrypt
+import httpx
 import uuid
+import secrets
 from datetime import date, time
 
 from app.database import create_db_and_tables, get_session
 from app.models import Client, Professional, Waitlist, ServiceRequest
 from app.auth import create_access_token, get_current_user
 from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse
+
+
 
 DUMMY_PASSWORD_HASH = os.getenv("DUMMY_PASSWORD_HASH", "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjIQqiRQYq")
 
@@ -84,6 +88,9 @@ class WaitlistRequest(BaseModel):
 class AdminLoginRequest(BaseModel):
     password: str
 
+class VerifyEmailRequest(BaseModel):
+    token: str
+
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID | None = None
     service_type: str = Field(max_length=100)
@@ -111,10 +118,11 @@ class ServiceRequestUpdate(BaseModel):
 
 @app.post("/api/auth/register")
 @limiter.limit("5/minute")
-def register(request: Request, data: RegisterRequest, session: Session = Depends(get_session)):
+async def register(request: Request, data: RegisterRequest, session: Session = Depends(get_session)):
     full_name = f"{data.name} {data.last_name}".strip()
     hashed_pwd = get_password_hash(data.password)
     email_lower = data.email.lower()
+    email_token = secrets.token_urlsafe(32)
     
     if data.role == "provider":
         # Check if email exists
@@ -127,7 +135,9 @@ def register(request: Request, data: RegisterRequest, session: Session = Depends
             email=email_lower,
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
-            specialty=data.specialty
+            specialty=data.specialty,
+            verification_token=email_token,
+            is_verified=False
         )
         session.add(new_user)
     else:
@@ -140,13 +150,26 @@ def register(request: Request, data: RegisterRequest, session: Session = Depends
             name=full_name,
             email=email_lower,
             whatsapp_number=data.whatsapp_number,
-            password=hashed_pwd
+            password=hashed_pwd,
+            verification_token=email_token, 
+            is_verified=False
         )
         session.add(new_user)
         
     session.commit()
     session.refresh(new_user)
     
+    try: 
+        async with httpx.AsyncClient() as client:
+            await client.post("http://localhost:5678/webhook/registro-esponja", json={
+                "email": new_user.email,
+                "name": new_user.name,
+                "role": data.role,
+                "verification_token": new_user.verification_token
+            })
+    except Exception as e:
+        print(f"Erro ao disparar gatilho de e-mail no n8n: {e}")
+
     return {"message": "User created successfully", "role": data.role, "user_id": str(new_user.id)}
 
 @app.post("/api/auth/login")
@@ -166,6 +189,8 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     client = session.exec(select(Client).where(Client.email == email_lower)).first()
     if client:
         if verify_password(data.password, client.password):
+            if not client.email_verified: 
+                raise HTTPException(status_code=403, detail="Por favor, verifique seu e-mail antes de fazer login.")
             access_token = create_access_token(data={"sub": str(client.id), "role": "customer"})
             response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
             return {
@@ -182,6 +207,8 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     professional = session.exec(select(Professional).where(Professional.email == email_lower)).first()
     if professional:
         if verify_password(data.password, professional.password):
+            if not professional.email_verified: 
+                raise HTTPException(status_code=403, detail="Por favor, verifique seu e-mail antes de fazer login.")
             access_token = create_access_token(data={"sub": str(professional.id), "role": "provider"})
             response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
             return {
@@ -195,6 +222,29 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
         verify_password(data.password, DUMMY_PASSWORD_HASH)
         
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+@app.post("/api/auth/verify")
+@limiter.limit("5/minute")
+def verify_email(request: Request, data: VerifyEmailRequest, session: Session = Depends(get_session)):
+    client = session.exec(select(Client).where(Client.verification_token == data.token)).first()
+    if client:
+        client.email_verified = True
+        client.verification_token = None
+        session.add(client)
+        session.commit()
+        return {"message": "Email verificado com sucesso!"}
+        
+    professional = session.exec(select(Professional).where(Professional.verification_token == data.token)).first()
+    if professional:
+        professional.email_verified = True
+        professional.verification_token = None 
+        session.add(professional)
+        session.commit()
+        return {"message": "Email verificado com sucesso!"}
+        
+    raise HTTPException(status_code=400, detail="Token inválido ou expirado.")
+
 
 @app.post("/api/auth/logout")
 def logout(response: Response):
@@ -380,3 +430,6 @@ def get_clients(
         raise HTTPException(status_code=403, detail="Not authorized")
     clients = session.exec(select(Client)).all()
     return clients
+
+
+
