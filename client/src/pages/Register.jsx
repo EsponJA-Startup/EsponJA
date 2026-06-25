@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import api from '../services/api';
 import './Auth.css';
 
 export default function Register() {
+  const navigate = useNavigate();
   const location = useLocation();
   const [role, setRole] = useState('customer'); // Default to customer
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    if (!location.state || !location.state.waitlist_id) {
+      navigate('/primeiro-acesso');
+    }
+  }, [location, navigate]);
+
   // Form states
   const [formData, setFormData] = useState({
     name: '',
     last_name: '',
-    email: '',
-    whatsapp_number: '',
+    email: location.state?.email || '',
+    whatsapp_number: location.state?.phone || '',
     specialty: '',
     password: ''
   });
@@ -38,7 +45,13 @@ export default function Register() {
     e.preventDefault();
     setError(null);
     try {
-      const response = await api.post('/auth/register', { ...formData, role });
+      const payload = { 
+        ...formData, 
+        role,
+        waitlist_id: location.state?.waitlist_id,
+        first_access_password: location.state?.first_access_password
+      };
+      const response = await api.post('/auth/register', payload);
       
       // Save to localStorage
       if (response.data.user_id) {

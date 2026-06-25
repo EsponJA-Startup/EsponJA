@@ -62,6 +62,8 @@ class RegisterRequest(BaseModel):
     whatsapp_number: str = Field(max_length=20)
     password: str = Field(max_length=100)
     specialty: str | None = Field(default=None, max_length=100)
+    waitlist_id: str
+    first_access_password: str
 
     @field_validator('password')
     def validate_password(cls, v):
@@ -87,6 +89,10 @@ class WaitlistRequest(BaseModel):
 
 class AdminLoginRequest(BaseModel):
     password: str
+
+class FirstAccessRequest(BaseModel):
+    email: EmailStr
+    first_access_password: str
 
 class VerifyEmailRequest(BaseModel):
     token: str
@@ -124,6 +130,19 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
     email_lower = data.email.lower()
     email_token = secrets.token_urlsafe(32)
     
+    # Secure First Access validation
+    try:
+        w_id = uuid.UUID(data.waitlist_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID da lista de espera inválido")
+        
+    waitlist_entry = session.get(Waitlist, w_id)
+    if not waitlist_entry or waitlist_entry.first_access_password != data.first_access_password or waitlist_entry.email != email_lower:
+        raise HTTPException(status_code=403, detail="Credenciais de primeiro acesso inválidas ou não conferem.")
+        
+    if waitlist_entry.is_registered:
+        raise HTTPException(status_code=400, detail="Este convite já foi utilizado para registro.")
+    
     if data.role == "provider":
         # Check if email exists
         existing = session.exec(select(Professional).where(Professional.email == email_lower)).first()
@@ -155,6 +174,9 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             is_verified=False
         )
         session.add(new_user)
+        
+    waitlist_entry.is_registered = True
+    session.add(waitlist_entry)
         
     session.commit()
     session.refresh(new_user)
@@ -224,6 +246,30 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
+@app.post("/api/auth/first-access")
+@limiter.limit("10/minute")
+def first_access(request: Request, data: FirstAccessRequest, session: Session = Depends(get_session)):
+    email_lower = data.email.lower()
+    waitlist_entry = session.exec(select(Waitlist).where(Waitlist.email == email_lower)).first()
+    
+    if not waitlist_entry:
+        raise HTTPException(status_code=404, detail="Email não encontrado na lista de espera.")
+        
+    if waitlist_entry.first_access_password != data.first_access_password:
+        raise HTTPException(status_code=401, detail="Senha de primeiro acesso inválida.")
+        
+    if waitlist_entry.is_registered:
+        raise HTTPException(status_code=400, detail="Este email já completou o registro.")
+        
+    return {
+        "message": "Acesso verificado",
+        "waitlist_id": str(waitlist_entry.id),
+        "email": waitlist_entry.email,
+        "phone": waitlist_entry.phone,
+        "intended_role": waitlist_entry.intended_role
+    }
+
+
 @app.post("/api/auth/verify")
 @limiter.limit("5/minute")
 def verify_email(request: Request, data: VerifyEmailRequest, session: Session = Depends(get_session)):
@@ -253,7 +299,7 @@ def logout(response: Response):
 
 @app.post("/api/waitlist")
 @limiter.limit("10/minute")
-def join_waitlist(request: Request, data: WaitlistRequest, session: Session = Depends(get_session)):
+async def join_waitlist(request: Request, data: WaitlistRequest, session: Session = Depends(get_session)):
     email_lower = data.email.lower()
     
     existing_waitlist = session.exec(select(Waitlist).where(Waitlist.email == email_lower)).first()
@@ -268,14 +314,27 @@ def join_waitlist(request: Request, data: WaitlistRequest, session: Session = De
     if existing_professional:
         raise HTTPException(status_code=400, detail="Email already registered as Professional")
         
+    first_access_pwd = secrets.token_hex(3)
+    
     entry = Waitlist(
         email=email_lower, 
         phone=data.phone, 
         intended_role=data.intended_role,
-        requested_service=data.requested_service
+        requested_service=data.requested_service,
+        first_access_password=first_access_pwd
     )
     session.add(entry)
     session.commit()
+    
+    try: 
+        async with httpx.AsyncClient() as client:
+            await client.post("http://localhost:5678/webhook/waitlist-esponja", json={
+                "email": entry.email,
+                "phone": entry.phone,
+                "first_access_password": entry.first_access_password
+            })
+    except Exception as e:
+        print(f"Erro ao disparar gatilho de e-mail no n8n (waitlist): {e}")
     
     return {"message": "Successfully added to waitlist"}
 

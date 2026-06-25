@@ -74,4 +74,6 @@ class Waitlist(SQLModel, table=True):
     phone: str | None = None
     intended_role: str | None = None  # "customer" or "provider"
     requested_service: str | None = None
+    first_access_password: str | None = None
+    is_registered: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

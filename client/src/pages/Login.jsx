@@ -91,7 +91,7 @@ export default function Login() {
           </form>
 
           <div className="form-footer">
-            Não tem uma conta? <Link to="/register" className="auth-link">Cadastre-se</Link>
+            Primeiro Acesso? <Link to="/primeiro-acesso" className="auth-link">Clique Aqui</Link>
           </div>
         </div>
       </main>
