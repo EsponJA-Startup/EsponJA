@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Home } from 'lucide-react';
+import { Menu, X, Home, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import './Navbar.css';
@@ -75,9 +75,10 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/register?type=provider" className="nav-link hide-mobile">Seja um Profissional</Link>
-              <Link to="/login" className="nav-link hide-mobile">Acessar Conta</Link>
-              <a href="#cta" className="btn btn-primary">Entrar<span className="hide-mobile"> na Fila</span></a>
+              <a href="/#cta" className="btn btn-primary">Entrar<span className="hide-mobile"> na Fila</span></a>
+              <Link to="/login" className="nav-link hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <LogIn size={18} /> Entrar
+              </Link>
             </>
           )}
           
