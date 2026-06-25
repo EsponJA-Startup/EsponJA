@@ -9,6 +9,7 @@ import ProviderHome from './pages/ProviderHome';
 import ServiceRequest from './pages/ServiceRequest';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import ComingSoon from './pages/ComingSoon';
 import './App.css'; 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Route path="/provider/home" element={<ProtectedRoute allowedRoles={['provider']}><ProviderHome /></ProtectedRoute>} />
           <Route path="/client/request-service" element={<ProtectedRoute allowedRoles={['customer']}><ServiceRequest /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="*" element={<ComingSoon />} />
         </Routes>
       </div>
     </BrowserRouter>

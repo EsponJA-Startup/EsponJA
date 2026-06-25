@@ -76,7 +76,8 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/register?type=provider" className="nav-link hide-mobile">Seja um Profissional</Link>
-              <Link to="/login" className="btn btn-primary">Entrar</Link>
+              <Link to="/login" className="nav-link hide-mobile">Acessar Conta</Link>
+              <a href="#cta" className="btn btn-primary">Entrar<span className="hide-mobile"> na Fila</span></a>
             </>
           )}
           

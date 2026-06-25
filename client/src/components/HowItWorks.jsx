@@ -8,7 +8,7 @@ export default function HowItWorks() {
       num: 1,
       icon: <Search size={36} />,
       title: 'Busca Rápida',
-      description: 'Encontre rapidamente profissionais disponíveis para suas necessidades domésticas específicas em um sistema centralizado.'
+      description: 'Encontre rapidamente diaristas disponíveis para a sua faxina em um sistema centralizado.'
     },
     {
       num: 2,
@@ -26,7 +26,7 @@ export default function HowItWorks() {
       num: 4,
       icon: <Smile size={36} />,
       title: 'Relaxe',
-      description: 'Desfrute de um serviço bem feito. Se surgir algum problema, nossa garantia de refação e suporte ativo cobrem você.'
+      description: 'Desfrute de uma casa limpa e cheirosa. Se surgir algum problema, nossa garantia de refação e suporte ativo cobrem você.'
     }
   ];
 
@@ -34,9 +34,9 @@ export default function HowItWorks() {
     <section id="how-it-works" className="section how-it-works">
       <div className="container">
         <div className="text-center">
-          <h2 className="section-title">Resolva Problemas Domésticos Rapidamente</h2>
+          <h2 className="section-title">Sua Casa Limpa em 4 Passos</h2>
           <p className="section-subtitle">
-            Um processo de agendamento simples, rápido e seguro em apenas 4 passos.
+            Um processo de agendamento simples, rápido e seguro.
           </p>
         </div>
 

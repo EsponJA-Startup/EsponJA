@@ -43,8 +43,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -77,7 +77,9 @@ class LoginRequest(BaseModel):
 
 class WaitlistRequest(BaseModel):
     email: EmailStr
+    phone: str | None = None
     intended_role: str | None = None
+    requested_service: str | None = None
 
 class AdminLoginRequest(BaseModel):
     password: str
@@ -112,16 +114,17 @@ class ServiceRequestUpdate(BaseModel):
 def register(request: Request, data: RegisterRequest, session: Session = Depends(get_session)):
     full_name = f"{data.name} {data.last_name}".strip()
     hashed_pwd = get_password_hash(data.password)
+    email_lower = data.email.lower()
     
     if data.role == "provider":
         # Check if email exists
-        existing = session.exec(select(Professional).where(Professional.email == data.email)).first()
+        existing = session.exec(select(Professional).where(Professional.email == email_lower)).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
             
         new_user = Professional(
             name=full_name,
-            email=data.email,
+            email=email_lower,
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
             specialty=data.specialty
@@ -129,13 +132,13 @@ def register(request: Request, data: RegisterRequest, session: Session = Depends
         session.add(new_user)
     else:
         # Check if email exists
-        existing = session.exec(select(Client).where(Client.email == data.email)).first()
+        existing = session.exec(select(Client).where(Client.email == email_lower)).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
             
         new_user = Client(
             name=full_name,
-            email=data.email,
+            email=email_lower,
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd
         )
@@ -149,17 +152,18 @@ def register(request: Request, data: RegisterRequest, session: Session = Depends
 @app.post("/api/auth/login")
 @limiter.limit("5/minute")
 def login(request: Request, data: LoginRequest, response: Response, session: Session = Depends(get_session)):
+    email_lower = data.email.lower()
     admin_email = os.getenv("ADMIN_EMAIL")
     admin_password = os.getenv("ADMIN_PASSWORD")
     
     # Check admin first
-    if admin_email and admin_password and data.email == admin_email and hmac.compare_digest(data.password, admin_password):
+    if admin_email and admin_password and email_lower == admin_email.lower() and hmac.compare_digest(data.password, admin_password):
         access_token = create_access_token(data={"sub": "admin", "role": "admin"})
         response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax")
         return {"message": "Admin login successful", "role": "admin", "user_id": "admin", "name": "Administrador"}
 
     # Check clients
-    client = session.exec(select(Client).where(Client.email == data.email)).first()
+    client = session.exec(select(Client).where(Client.email == email_lower)).first()
     if client:
         if verify_password(data.password, client.password):
             access_token = create_access_token(data={"sub": str(client.id), "role": "customer"})
@@ -175,7 +179,7 @@ def login(request: Request, data: LoginRequest, response: Response, session: Ses
         verify_password(data.password, DUMMY_PASSWORD_HASH)
         
     # Check professionals
-    professional = session.exec(select(Professional).where(Professional.email == data.email)).first()
+    professional = session.exec(select(Professional).where(Professional.email == email_lower)).first()
     if professional:
         if verify_password(data.password, professional.password):
             access_token = create_access_token(data={"sub": str(professional.id), "role": "provider"})
@@ -200,11 +204,26 @@ def logout(response: Response):
 @app.post("/api/waitlist")
 @limiter.limit("10/minute")
 def join_waitlist(request: Request, data: WaitlistRequest, session: Session = Depends(get_session)):
-    existing = session.exec(select(Waitlist).where(Waitlist.email == data.email)).first()
-    if existing:
+    email_lower = data.email.lower()
+    
+    existing_waitlist = session.exec(select(Waitlist).where(Waitlist.email == email_lower)).first()
+    if existing_waitlist:
         raise HTTPException(status_code=400, detail="Email already on waitlist")
         
-    entry = Waitlist(email=data.email, intended_role=data.intended_role)
+    existing_client = session.exec(select(Client).where(Client.email == email_lower)).first()
+    if existing_client:
+        raise HTTPException(status_code=400, detail="Email already registered as Client")
+        
+    existing_professional = session.exec(select(Professional).where(Professional.email == email_lower)).first()
+    if existing_professional:
+        raise HTTPException(status_code=400, detail="Email already registered as Professional")
+        
+    entry = Waitlist(
+        email=email_lower, 
+        phone=data.phone, 
+        intended_role=data.intended_role,
+        requested_service=data.requested_service
+    )
     session.add(entry)
     session.commit()
     

@@ -4,18 +4,37 @@ import './CTA.css';
 
 export default function CTA() {
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [intendedRole, setIntendedRole] = useState('customer');
+  const [requestedService, setRequestedService] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    
+    // Validate phone if provided
+    if (phone) {
+      const phoneDigits = phone.replace(/\D/g, '');
+      if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+        setError("Por favor, insira um número de WhatsApp válido com DDD.");
+        return;
+      }
+    }
+
     if (email) {
       try {
-        await api.post('/waitlist', { email, intended_role: intendedRole });
+        await api.post('/waitlist', { 
+          email, 
+          phone, 
+          intended_role: intendedRole,
+          requested_service: requestedService
+        });
         setSubmitted(true);
         setEmail('');
+        setPhone('');
+        setRequestedService('');
       } catch (err) {
         if (err.response && err.response.data && err.response.data.detail) {
           setError(err.response.data.detail);
@@ -38,27 +57,46 @@ export default function CTA() {
             <p>Fique de olho na sua caixa de entrada. Avisaremos quando o EsponJÁ estiver disponível na sua área.</p>
           </div>
         ) : (
-          <form className="waitlist-form" onSubmit={handleSubmit}>
-            <select 
-              className="waitlist-input"
-              value={intendedRole}
-              onChange={(e) => setIntendedRole(e.target.value)}
-              style={{ width: '150px', backgroundColor: 'white' }}
-            >
-              <option value="customer">Contratar</option>
-              <option value="provider">Trabalhar</option>
-            </select>
-            <input 
-              type="email" 
-              placeholder="Digite seu endereço de e-mail" 
-              className="waitlist-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-            />
-            <button type="submit" className="waitlist-btn">Entrar na Fila</button>
-            {error && <p style={{ color: 'white', marginTop: '10px', fontSize: '14px', width: '100%', textAlign: 'center' }}>{error}</p>}
-          </form>
+          <div className="waitlist-form-container">
+            <form className="waitlist-form" onSubmit={handleSubmit}>
+              <select 
+                className="waitlist-input role-select"
+                value={intendedRole}
+                onChange={(e) => setIntendedRole(e.target.value)}
+              >
+                <option value="customer">Contratar</option>
+                <option value="provider">Trabalhar</option>
+              </select>
+              <input 
+                type="email" 
+                placeholder="Digite seu endereço de e-mail" 
+                className="waitlist-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
+              <input 
+                type="tel" 
+                placeholder="Digite seu WhatsApp" 
+                className="waitlist-input"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/[^0-9\+\-\(\)\s]/g, ''))}
+              />
+              {intendedRole === 'customer' && (
+                <input 
+                  type="text" 
+                  placeholder="Qual serviço você está procurando?" 
+                  className="waitlist-input"
+                  value={requestedService}
+                  onChange={(e) => setRequestedService(e.target.value)}
+                />
+              )}
+              <button type="submit" className="waitlist-btn">
+                Entrar na Fila
+              </button>
+            </form>
+            {error && <p className="waitlist-error" style={{ color: '#ffb3b3', marginTop: '1rem', fontSize: '1rem', textAlign: 'center', fontWeight: '500' }}>{error}</p>}
+          </div>
         )}
       </div>
     </section>
