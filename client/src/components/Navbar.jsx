@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Home, LogIn } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './Navbar.css';
 
@@ -8,6 +8,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const userRole = localStorage.getItem('user_role');
   const userName = localStorage.getItem('user_name');
 
@@ -19,7 +20,7 @@ export default function Navbar() {
     }
     localStorage.removeItem('user_role');
     localStorage.removeItem('user_name');
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const isHome = location.pathname === '/';
