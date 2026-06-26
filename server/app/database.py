@@ -1,5 +1,6 @@
 import os
 from sqlmodel import SQLModel, create_engine, Session
+from sqlalchemy import text
 
 # 1. Tenta pegar a URL do Neon nas variáveis de ambiente do Render
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -25,6 +26,25 @@ def create_db_and_tables():
     # Importa os modelos para o SQLModel criar as tabelas
     from .models import Client, Professional, Waitlist
     SQLModel.metadata.create_all(engine)
+    
+    # Migração automática para o Postgres (Render/Neon)
+    if "postgresql" in str(engine.url):
+        with engine.connect() as conn:
+            queries = [
+                "ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS first_access_password VARCHAR;",
+                "ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS is_registered BOOLEAN DEFAULT FALSE;",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS verification_token VARCHAR;",
+                "ALTER TABLE professional ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;",
+                "ALTER TABLE professional ADD COLUMN IF NOT EXISTS verification_token VARCHAR;"
+            ]
+            for q in queries:
+                try:
+                    conn.execute(text(q))
+                    conn.commit()
+                except Exception as e:
+                    conn.rollback()
+                    print(f"Postgres migration notice: {e}")
 
 def get_session():
     with Session(engine) as session:
