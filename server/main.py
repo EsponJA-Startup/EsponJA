@@ -182,8 +182,13 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
     session.refresh(new_user)
     
     try: 
+        n8n_base_url = os.getenv("N8N_WEBHOOK_URL")
+        if not n8n_base_url:
+            raise ValueError("N8N_WEBHOOK_URL environment variable is not defined.")
+        n8n_base_url = n8n_base_url.rstrip('/')
+            
         async with httpx.AsyncClient() as client:
-            await client.post("http://localhost:5678/webhook/registro-esponja", json={
+            await client.post(f"{n8n_base_url}/webhook/registro-esponja", json={
                 "email": new_user.email,
                 "name": new_user.name,
                 "role": data.role,
@@ -327,8 +332,13 @@ async def join_waitlist(request: Request, data: WaitlistRequest, session: Sessio
     session.commit()
     
     try: 
+        n8n_base_url = os.getenv("N8N_WEBHOOK_URL")
+        if not n8n_base_url:
+            raise ValueError("N8N_WEBHOOK_URL environment variable is not defined.")
+        n8n_base_url = n8n_base_url.rstrip('/')
+            
         async with httpx.AsyncClient() as client:
-            await client.post("http://localhost:5678/webhook/waitlist-esponja", json={
+            await client.post(f"{n8n_base_url}/webhook/waitlist-esponja", json={
                 "email": entry.email,
                 "phone": entry.phone,
                 "first_access_password": entry.first_access_password
