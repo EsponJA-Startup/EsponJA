@@ -8,7 +8,7 @@ import './Auth.css';
 export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [role, setRole] = useState('customer'); // Default to customer
+  const [role, setRole] = useState(location.state?.intended_role || 'customer');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
@@ -28,14 +28,7 @@ export default function Register() {
     password: ''
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('type') === 'provider') {
-      setRole('provider');
-    } else {
-      setRole('customer');
-    }
-  }, [location.search]);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -83,22 +76,7 @@ export default function Register() {
           <h2>Crie sua conta</h2>
           <p className="auth-subtitle">Junte-se à revolução dos serviços domésticos</p>
 
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-            <button 
-              className={`btn ${role === 'customer' ? 'btn-primary' : 'btn-outline'}`} 
-              style={{ flex: 1 }}
-              onClick={() => { setRole('customer'); setSubmitted(false); setError(null); }}
-            >
-              Quero Contratar
-            </button>
-            <button 
-              className={`btn ${role === 'provider' ? 'btn-primary' : 'btn-outline'}`} 
-              style={{ flex: 1 }}
-              onClick={() => { setRole('provider'); setSubmitted(false); setError(null); }}
-            >
-              Quero Trabalhar
-            </button>
-          </div>
+
 
           {submitted ? (
             <div className="mock-alert">

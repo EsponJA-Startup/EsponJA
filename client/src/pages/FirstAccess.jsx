@@ -49,7 +49,7 @@ export default function FirstAccess() {
       <main className="auth-main">
         <div className="auth-card">
           <h2>Primeiro Acesso</h2>
-          <p className="auth-subtitle">Insira o e-mail cadastrado na lista de espera e a senha enviada para você.</p>
+          <p className="auth-subtitle">Insira o e-mail cadastrado na lista de espera e o código de confirmação enviado para você.</p>
           
           <form onSubmit={handleSubmit}>
             {error && <div className="mock-alert" style={{ backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#f87171' }}>{error}</div>}
@@ -68,7 +68,7 @@ export default function FirstAccess() {
             </div>
             
             <div className="form-group">
-              <label className="form-label">Senha de Primeiro Acesso</label>
+              <label className="form-label">Código de Confirmação</label>
               <input 
                 type="password" 
                 name="first_access_password" 
@@ -76,7 +76,7 @@ export default function FirstAccess() {
                 onChange={handleChange} 
                 required 
                 className="form-input" 
-                placeholder="Insira a senha recebida" 
+                placeholder="Insira o código recebido" 
               />
             </div>
 

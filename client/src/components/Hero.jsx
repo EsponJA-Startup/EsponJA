@@ -20,7 +20,7 @@ export default function Hero() {
         </p>
         
         <div className="hero-actions">
-          <a href="#cta" className="btn btn-primary">Encontrar um Profissional</a>
+          <a href="#cta" className="btn btn-primary">Venha ser EsponJA</a>
           <a href="#how-it-works" className="btn btn-secondary">Veja Como Funciona</a>
         </div>
         

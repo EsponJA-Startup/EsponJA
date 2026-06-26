@@ -139,7 +139,7 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
         
     waitlist_entry = session.get(Waitlist, w_id)
     if not waitlist_entry or waitlist_entry.first_access_password != data.first_access_password or waitlist_entry.email != email_lower:
-        raise HTTPException(status_code=403, detail="Credenciais de primeiro acesso inválidas ou não conferem.")
+        raise HTTPException(status_code=403, detail="Código de confirmação inválido ou não confere.")
         
     if waitlist_entry.is_registered:
         raise HTTPException(status_code=400, detail="Este convite já foi utilizado para registro.")
@@ -156,7 +156,8 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
             specialty=data.specialty,
-            verification_token=email_token,
+            verification_token=None,
+            email_verified=True,
             is_verified=False
         )
         session.add(new_user)
@@ -171,8 +172,8 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             email=email_lower,
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
-            verification_token=email_token, 
-            is_verified=False
+            verification_token=None, 
+            email_verified=True
         )
         session.add(new_user)
         
@@ -262,7 +263,7 @@ def first_access(request: Request, data: FirstAccessRequest, session: Session = 
         raise HTTPException(status_code=404, detail="Email não encontrado na lista de espera.")
         
     if waitlist_entry.first_access_password != data.first_access_password:
-        raise HTTPException(status_code=401, detail="Senha de primeiro acesso inválida.")
+        raise HTTPException(status_code=401, detail="Código de confirmação inválido.")
         
     if waitlist_entry.is_registered:
         raise HTTPException(status_code=400, detail="Este email já completou o registro.")
