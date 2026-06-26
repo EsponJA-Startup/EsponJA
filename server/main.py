@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr, field_validator, Field
 import re
 import os
 import hmac
+import logging
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -338,13 +339,18 @@ async def join_waitlist(request: Request, data: WaitlistRequest, session: Sessio
         n8n_base_url = n8n_base_url.rstrip('/')
             
         async with httpx.AsyncClient() as client:
-            await client.post(f"{n8n_base_url}/webhook/waitlist-esponja", json={
+            response = await client.post(f"{n8n_base_url}/webhook/waitlist-esponja", json={
                 "email": entry.email,
                 "phone": entry.phone,
                 "first_access_password": entry.first_access_password
             })
+            response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        logging.error(f"Erro HTTP ao disparar gatilho de e-mail no n8n (waitlist): {e.response.status_code} - {e.response.text}")
+    except httpx.RequestError as e:
+        logging.error(f"Erro de rede ao disparar gatilho de e-mail no n8n (waitlist): {e}")
     except Exception as e:
-        print(f"Erro ao disparar gatilho de e-mail no n8n (waitlist): {e}")
+        logging.error(f"Erro inesperado ao disparar gatilho de e-mail no n8n (waitlist): {e}")
     
     return {"message": "Successfully added to waitlist"}
 

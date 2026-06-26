@@ -22,7 +22,7 @@
         "fromEmail": "bernardo06pereiras@gmail.com",
         "toEmail": "={{ $json.body.email }}",
         "subject": "=Bem-vindo ao EsponJA, {{ $json.body.name }}!",
-        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">\n    \n    <h2 style=\"color: #2c3e50; text-align: center;\">Bem-vindo ao EsponJA! 🧽</h2>\n    \n    <p style=\"color: #555; font-size: 16px;\">Olá, <strong>{{ $json.body.name }}</strong>!</p>\n    \n    <p style=\"color: #555; font-size: 16px;\">Estamos muito felizes em ter você na nossa plataforma como {{ $json.body.role == 'provider' ? 'profissional' : 'cliente' }}.</p>\n    \n    <p style=\"color: #555; font-size: 16px;\">Para garantir a segurança da sua conta e liberar o seu acesso, precisamos que você confirme este endereço de e-mail clicando no botão abaixo:</p>\n    \n    <div style=\"text-align: center; margin: 30px 0;\">\n        <a href=\"http://localhost:5173/verificar-email?token={{ $json.body.verification_token }}\" \n           style=\"background-color: #f39c12; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;\">\n           Confirmar Meu E-mail\n        </a>\n    </div>\n    \n    <p style=\"color: #777; font-size: 14px; text-align: center;\">\n        Se você não criou essa conta, apenas ignore este e-mail.\n    </p>\n    <hr style=\"border: 0; border-top: 1px solid #eee; margin: 20px 0;\">\n    <p style=\"color: #999; font-size: 12px; text-align: center;\">Equipe EsponJA</p>\n</div>",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">\n    \n    <h2 style=\"color: #2c3e50; text-align: center;\">Bem-vindo ao EsponJA! \ud83e\uddfd</h2>\n    \n    <p style=\"color: #555; font-size: 16px;\">Ol\u00e1, <strong>{{ $json.body.name }}</strong>!</p>\n    \n    <p style=\"color: #555; font-size: 16px;\">Estamos muito felizes em ter voc\u00ea na nossa plataforma como {{ $json.body.role == 'provider' ? 'profissional' : 'cliente' }}.</p>\n    \n    <p style=\"color: #555; font-size: 16px;\">Para garantir a seguran\u00e7a da sua conta e liberar o seu acesso, precisamos que voc\u00ea confirme este endere\u00e7o de e-mail clicando no bot\u00e3o abaixo:</p>\n    \n    <div style=\"text-align: center; margin: 30px 0;\">\n        <a href=\"http://localhost:5173/verificar-email?token={{ $json.body.verification_token }}\" \n           style=\"background-color: #f39c12; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;\">\n           Confirmar Meu E-mail\n        </a>\n    </div>\n    \n    <p style=\"color: #777; font-size: 14px; text-align: center;\">\n        Se voc\u00ea n\u00e3o criou essa conta, apenas ignore este e-mail.\n    </p>\n    <hr style=\"border: 0; border-top: 1px solid #eee; margin: 20px 0;\">\n    <p style=\"color: #999; font-size: 12px; text-align: center;\">Equipe EsponJA</p>\n</div>",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
@@ -40,6 +40,44 @@
           "name": "SMTP account"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "waitlist-esponja",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        250
+      ],
+      "id": "waitlist-webhook-node-id",
+      "name": "Webhook Waitlist"
+    },
+    {
+      "parameters": {
+        "fromEmail": "bernardo06pereiras@gmail.com",
+        "toEmail": "={{ $json.body.email }}",
+        "subject": "=Acesso \u00e0 lista de espera do EsponJA",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">\\n    <h2 style=\"color: #2c3e50; text-align: center;\">Voc\u00ea est\u00e1 na fila do EsponJA! \ud83e\uddfd</h2>\\n    <p style=\"color: #555; font-size: 16px;\">Ol\u00e1!</p>\\n    <p style=\"color: #555; font-size: 16px;\">Sua senha de primeiro acesso \u00e9: <strong>{{ $json.body.first_access_password }}</strong></p>\\n    <p style=\"color: #777; font-size: 14px; text-align: center;\">\\n        Guarde esta senha para poder acessar seu convite quando ele for liberado.\\n    </p>\\n    <hr style=\"border: 0; border-top: 1px solid #eee; margin: 20px 0;\">\\n    <p style=\"color: #999; font-size: 12px; text-align: center;\">Equipe EsponJA</p>\\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        250
+      ],
+      "id": "waitlist-email-node-id",
+      "name": "Send Waitlist Email",
+      "credentials": {
+        "smtp": {
+          "id": "AOkKKXQ9evhzgr63",
+          "name": "SMTP account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -49,6 +87,17 @@
         [
           {
             "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Waitlist": {
+      "main": [
+        [
+          {
+            "node": "Send Waitlist Email",
             "type": "main",
             "index": 0
           }
