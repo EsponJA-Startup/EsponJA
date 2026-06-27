@@ -9,7 +9,6 @@ export default function ProviderHome() {
   const [activeTab, setActiveTab] = useState('solicitacoes');
   const [professionalData, setProfessionalData] = useState(null);
   const [requests, setRequests] = useState([]);
-  const [hiddenRequests, setHiddenRequests] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = async () => {
@@ -48,8 +47,16 @@ export default function ProviderHome() {
     }
   };
 
-  const handleRejectRequest = (id) => {
-    setHiddenRequests(prev => new Set(prev).add(id));
+  const handleRejectRequest = async (id) => {
+    if (window.confirm("Você tem certeza que deseja recusar este serviço?")) {
+      try {
+        await api.post(`/service-requests/${id}/reject`);
+        fetchDashboardData();
+      } catch (error) {
+        console.error("Erro ao recusar o serviço:", error);
+        alert("Ocorreu um erro ao recusar o serviço.");
+      }
+    }
   };
 
   if (loading) {
@@ -64,7 +71,7 @@ export default function ProviderHome() {
     );
   }
 
-  const pendingRequests = requests.filter(req => req.status === 'Pendente' && !hiddenRequests.has(req.id));
+  const pendingRequests = requests.filter(req => req.status === 'Pendente');
   const scheduledRequests = requests.filter(req => req.status === 'Em Andamento');
 
   const fallbackName = localStorage.getItem('user_name') || 'Profissional';

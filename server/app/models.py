@@ -77,3 +77,10 @@ class Waitlist(SQLModel, table=True):
     first_access_password: str | None = None
     is_registered: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ServiceRequestRejection(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    professional_id: uuid.UUID = Field(foreign_key="professional.id")
+    service_request_id: uuid.UUID = Field(foreign_key="servicerequest.id")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+

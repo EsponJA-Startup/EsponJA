@@ -20,7 +20,7 @@ import secrets
 from datetime import date, time
 
 from app.database import create_db_and_tables, get_session
-from app.models import Client, Professional, Waitlist, ServiceRequest
+from app.models import Client, Professional, Waitlist, ServiceRequest, ServiceRequestRejection
 from app.auth import create_access_token, get_current_user
 from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse
 
@@ -410,12 +410,18 @@ def get_service_requests(session: Session = Depends(get_session), current_user: 
             (ServiceRequest.status == "Pendente") | (ServiceRequest.professional_id == uuid.UUID(user_id))
         )).all()
         
+        # Filter out requests rejected by the current professional
+        rejected_ids = set(session.exec(select(ServiceRequestRejection.service_request_id).where(
+            ServiceRequestRejection.professional_id == uuid.UUID(user_id)
+        )).all())
+        
         result = []
         for r in requests:
-            if r.status == "Pendente" and str(r.professional_id) != user_id:
-                result.append(ServiceRequestPublicResponse(**r.model_dump()))
-            else:
-                result.append(ServiceRequestResponse(**r.model_dump()))
+            if r.id not in rejected_ids:
+                if r.status == "Pendente" and str(r.professional_id) != user_id:
+                    result.append(ServiceRequestPublicResponse(**r.model_dump()))
+                else:
+                    result.append(ServiceRequestResponse(**r.model_dump()))
         return result
 
 @app.get("/api/service-requests/{request_id}")
@@ -480,6 +486,37 @@ def delete_service_request(request_id: uuid.UUID, session: Session = Depends(get
     session.delete(db_request)
     session.commit()
     return {"message": "Service request deleted successfully"}
+
+@app.post("/api/service-requests/{request_id}/reject")
+def reject_service_request(request_id: uuid.UUID, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "provider":
+        raise HTTPException(status_code=403, detail="Apenas prestadores podem recusar serviços.")
+        
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if db_request.status != "Pendente":
+        raise HTTPException(status_code=400, detail="Apenas serviços pendentes podem ser recusados.")
+        
+    user_id = current_user["user_id"]
+    professional_id = uuid.UUID(user_id)
+    
+    # Check if already rejected
+    existing = session.exec(select(ServiceRequestRejection).where(
+        (ServiceRequestRejection.professional_id == professional_id) & 
+        (ServiceRequestRejection.service_request_id == request_id)
+    )).first()
+    
+    if not existing:
+        rejection = ServiceRequestRejection(
+            professional_id=professional_id,
+            service_request_id=request_id
+        )
+        session.add(rejection)
+        session.commit()
+        
+    return {"message": "Service request rejected successfully"}
 
 @app.get("/api/professionals/me", response_model=ProfessionalResponse)
 def get_professional_me(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
