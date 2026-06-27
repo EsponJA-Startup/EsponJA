@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Star, MapPin, Calendar, Clock, ShieldCheck, Edit, Trash2 } from 'lucide-react';
+import { Star, MapPin, Calendar, Clock, ShieldCheck, Edit, Trash2, History } from 'lucide-react';
 import api from '../services/api';
 import './ClientHome.css';
 
@@ -18,37 +18,19 @@ export default function ClientHome() {
     }
   };
 
-  const recommendedPros = [
-    {
-      id: 1,
-      name: "Ana Silva",
-      rating: 4.9,
-      reviews: 124,
-      distance: "2.5 km",
-      badges: ["Top Pro", "Verificada"],
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    },
-    {
-      id: 2,
-      name: "Carlos Mendes",
-      rating: 4.8,
-      reviews: 89,
-      distance: "3.1 km",
-      badges: ["Limpeza Pesada", "Verificado"],
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    },
-    {
-      id: 3,
-      name: "Juliana Costa",
-      rating: 5.0,
-      reviews: 42,
-      distance: "1.8 km",
-      badges: ["Rápida", "Verificada"],
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    }
-  ];
-
   const [myAppointments, setMyAppointments] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+
+  const isServicePast = (dateStr, timeStr) => {
+    if (!dateStr) return false;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = (timeStr || '00:00').split(':').map(Number);
+    const serviceDate = new Date(year, month - 1, day, hours, minutes);
+    const now = new Date();
+    return now >= serviceDate;
+  };
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -59,8 +41,57 @@ export default function ClientHome() {
         console.error("Error fetching appointments:", err);
       }
     };
+    
+    const fetchProfessionals = async () => {
+      try {
+        const response = await api.get('/professionals');
+        setProfessionals(response.data);
+      } catch (err) {
+        console.error("Error fetching professionals:", err);
+      }
+    };
+
     fetchAppointments();
+    fetchProfessionals();
   }, []);
+
+  const normalizeString = (str) => {
+    if (!str) return "";
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  };
+
+  const getWeightedRating = (pro) => {
+    const v = pro.review_count || 0;
+    const R = pro.rating || 0;
+    const C = 4.0; // Baseline rating
+    const m = 10;  // Weight multiplier
+    return (v * R + m * C) / (v + m);
+  };
+
+  const normalizedQuery = normalizeString(searchQuery);
+
+  const filteredPros = professionals
+    .filter(pro => 
+      normalizeString(pro.name).includes(normalizedQuery) || 
+      (pro.specialty && normalizeString(pro.specialty).includes(normalizedQuery))
+    )
+    .sort((a, b) => {
+      const weightA = getWeightedRating(a);
+      const weightB = getWeightedRating(b);
+      
+      if (Math.abs(weightB - weightA) > 0.0001) {
+        return weightB - weightA;
+      }
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 5);
+
+  const displayedAppointments = showHistory 
+    ? myAppointments 
+    : myAppointments.filter(appt => appt.status !== 'Concluído' && !isServicePast(appt.scheduled_date, appt.scheduled_time));
 
   const handleDelete = async (id) => {
     if (window.confirm("Tem certeza que deseja excluir este pedido?")) {
@@ -111,68 +142,110 @@ export default function ClientHome() {
         <div className="dashboard-grid">
           <section className="matching-section dashboard-card">
             <div className="card-header">
-              <h3>Profissionais Recomendados</h3>
-              <span className="badge-smart">Matching Inteligente</span>
+              <h3>Buscar Prestadores de Serviço</h3>
             </div>
-            <p className="section-desc">Baseado na sua localização e avaliações.</p>
+            <p className="section-desc">Pesquise por nome ou especialidade e escolha um prestador para agendar.</p>
+            
+            <div className="search-container" style={{ marginBottom: '1.5rem' }}>
+              <input 
+                type="text" 
+                placeholder="Pesquisar por nome ou especialidade..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="form-input"
+                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontSize: '0.95rem' }}
+              />
+            </div>
             
             <div className="pros-list">
-              {recommendedPros.map(pro => (
-                <div key={pro.id} className="pro-card">
-                  <img src={pro.image} alt={pro.name} className="pro-avatar" />
-                  <div className="pro-info">
-                    <h4>{pro.name}</h4>
-                    <div className="pro-meta">
-                      <span className="rating"><Star size={14} fill="currentColor" /> {pro.rating} ({pro.reviews})</span>
-                      <span className="distance"><MapPin size={14} /> {pro.distance}</span>
+              {filteredPros.length === 0 ? (
+                <p style={{ color: 'var(--text-light)', textAlign: 'center', padding: '1.5rem 0' }}>
+                  Nenhum prestador encontrado.
+                </p>
+              ) : (
+                filteredPros.map(pro => {
+                  const avatarUrl = pro.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(pro.name)}&background=003366&color=fff&size=256`;
+                  return (
+                    <div key={pro.id} className="pro-card">
+                      <img src={avatarUrl} alt={pro.name} className="pro-avatar" />
+                      <div className="pro-info">
+                        <h4>{pro.name}</h4>
+                        <div className="pro-meta">
+                          <span className="rating"><Star size={14} fill="currentColor" /> {pro.rating.toFixed(1)} ({pro.review_count})</span>
+                          {pro.specialty && <span className="specialty" style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '10px' }}>• {pro.specialty}</span>}
+                        </div>
+                        <div className="pro-badges">
+                          {pro.badges && pro.badges.map((badge, idx) => (
+                            <span key={idx} className="badge-outline">{badge}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => navigate(`/client/request-service?professional_id=${pro.id}`)}
+                        className="btn btn-primary btn-sm"
+                      >
+                        Agendar
+                      </button>
                     </div>
-                    <div className="pro-badges">
-                      {pro.badges.map((badge, idx) => (
-                        <span key={idx} className="badge-outline">{badge}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <button className="btn btn-primary btn-sm">Ver Perfil</button>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </section>
 
           <section className="appointments-section dashboard-card">
-            <h3>Meus Agendamentos</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{showHistory ? "Histórico de Serviços" : "Meus Agendamentos"}</h3>
+              <button 
+                onClick={() => setShowHistory(!showHistory)} 
+                className={`btn btn-sm ${showHistory ? 'btn-primary' : 'btn-outline'}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)' }}
+                title={showHistory ? "Ver Agendamentos Ativos" : "Ver Histórico Completo"}
+              >
+                <History size={16} />
+                {showHistory ? "Ativos" : "Histórico"}
+              </button>
+            </div>
             <div className="appointments-list">
-              {myAppointments.length === 0 ? (
-                <p>Nenhum agendamento encontrado.</p>
+              {displayedAppointments.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-light)' }}>
+                  {showHistory ? "Seu histórico está vazio." : "Nenhum agendamento ativo."}
+                </p>
               ) : (
-                myAppointments.map(appt => (
-                  <div key={appt.id} className="appointment-card">
-                    <div className="appt-header">
-                      <h4>{appt.service_type}</h4>
-                      <span className={`status-badge ${appt.status === 'Confirmado' || appt.status === 'Concluído' ? 'success' : 'pending'}`}>
-                        {appt.status}
-                      </span>
+                displayedAppointments.map(appt => {
+                  const isPast = appt.status === 'Concluído' || isServicePast(appt.scheduled_date, appt.scheduled_time);
+                  return (
+                    <div key={appt.id} className="appointment-card" style={{ opacity: isPast ? 0.75 : 1 }}>
+                      <div className="appt-header">
+                        <h4>{appt.service_type}</h4>
+                        <span className={`status-badge ${appt.status === 'Concluído' ? 'success' : (isPast ? 'expired' : 'pending')}`} style={{ backgroundColor: isPast && appt.status !== 'Concluído' ? '#e2e8f0' : undefined, color: isPast && appt.status !== 'Concluído' ? '#64748b' : undefined }}>
+                          {appt.status === 'Concluído' ? 'Concluído' : (isPast ? 'Realizado' : appt.status)}
+                        </span>
+                      </div>
+                      <p className="appt-pro">
+                        com <strong>{appt.professional_name ? appt.professional_name : (appt.professional_id ? "Profissional Atribuído" : "Aguardando Profissional")}</strong>
+                      </p>
+                      <div className="appt-details">
+                        <span><Calendar size={16} /> {appt.scheduled_date}</span>
+                        <span><Clock size={16} /> {appt.scheduled_time}</span>
+                      </div>
+                      <div className="appt-payment">
+                        <ShieldCheck size={18} className="shield-icon" />
+                        <span>{appt.payment_status}</span>
+                      </div>
+                      {!isPast && (
+                        <div className="appt-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                          <button onClick={() => handleEdit(appt.id)} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Edit size={14} /> Editar
+                          </button>
+                          <button onClick={() => handleDelete(appt.id)} className="btn btn-danger btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none' }}>
+                            <Trash2 size={14} /> Excluir
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <p className="appt-pro">
-                      com <strong>{appt.professional_name ? appt.professional_name : (appt.professional_id ? "Profissional Atribuído" : "Aguardando Profissional")}</strong>
-                    </p>
-                    <div className="appt-details">
-                      <span><Calendar size={16} /> {appt.scheduled_date}</span>
-                      <span><Clock size={16} /> {appt.scheduled_time}</span>
-                    </div>
-                    <div className="appt-payment">
-                      <ShieldCheck size={18} className="shield-icon" />
-                      <span>{appt.payment_status}</span>
-                    </div>
-                    <div className="appt-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                      <button onClick={() => handleEdit(appt.id)} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Edit size={14} /> Editar
-                      </button>
-                      <button onClick={() => handleDelete(appt.id)} className="btn btn-danger btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none' }}>
-                        <Trash2 size={14} /> Excluir
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </section>

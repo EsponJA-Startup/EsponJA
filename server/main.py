@@ -100,6 +100,7 @@ class VerifyEmailRequest(BaseModel):
 
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID | None = None
+    professional_id: uuid.UUID | None = None
     service_type: str = Field(max_length=100)
     home_type: str = Field(max_length=100)
     bedrooms: str = Field(max_length=50)
@@ -407,7 +408,8 @@ def get_service_requests(session: Session = Depends(get_session), current_user: 
         return result
     else: # provider
         requests = session.exec(select(ServiceRequest).where(
-            (ServiceRequest.status == "Pendente") | (ServiceRequest.professional_id == uuid.UUID(user_id))
+            (ServiceRequest.professional_id == uuid.UUID(user_id)) |
+            ((ServiceRequest.status == "Pendente") & (ServiceRequest.professional_id == None))
         )).all()
         
         # Filter out requests rejected by the current professional
@@ -529,10 +531,19 @@ def get_professional_me(session: Session = Depends(get_session), current_user: d
 
 @app.get("/api/professionals", response_model=list[ProfessionalResponse])
 def get_professionals(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
+    if current_user["role"] not in ["admin", "customer"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     professionals = session.exec(select(Professional)).all()
     return professionals
+
+@app.get("/api/professionals/{professional_id}", response_model=ProfessionalResponse)
+def get_professional_by_id(professional_id: uuid.UUID, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "customer"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    professional = session.get(Professional, professional_id)
+    if not professional:
+        raise HTTPException(status_code=404, detail="Professional not found")
+    return professional
 
 @app.get("/api/clients", response_model=list[ClientResponse])
 def get_clients(
