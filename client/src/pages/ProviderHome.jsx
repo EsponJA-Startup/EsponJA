@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Star, ShieldCheck, DollarSign, Calendar as CalendarIcon, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, ShieldCheck, DollarSign, Calendar as CalendarIcon, CheckCircle, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import api from '../services/api';
 import './ProviderHome.css';
 
 export default function ProviderHome() {
   const [activeTab, setActiveTab] = useState('solicitacoes');
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
   const [professionalData, setProfessionalData] = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,12 +96,26 @@ export default function ProviderHome() {
       cells.push(<div key={`empty-${i}`} className="calendar-cell empty"></div>);
     }
     
+    const getDayServices = (d) => {
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      return scheduledRequests.filter(req => req.scheduled_date === dateStr);
+    };
+
     for (let day = 1; day <= daysInMonth; day++) {
       const today = new Date();
       const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+      
+      const dayServices = getDayServices(day);
+      const hasServices = dayServices.length > 0;
+      
       cells.push(
-        <div key={`day-${day}`} className={`calendar-cell ${isToday ? 'active-day' : ''}`}>
-          <span className="date-number">
+        <div 
+          key={`day-${day}`} 
+          className={`calendar-cell ${isToday ? 'active-day' : ''}`}
+          onClick={() => setSelectedDay(day)}
+          style={{ cursor: 'pointer' }}
+        >
+          <span className={`date-number ${hasServices ? 'has-services' : ''}`}>
             {String(day).padStart(2, '0')}
           </span>
         </div>
@@ -284,6 +300,106 @@ export default function ProviderHome() {
         )}
 
         {activeTab === 'calendario' && renderCalendar()}
+
+        {selectedDay !== null && (
+          <div className="modal-overlay" onClick={() => { setSelectedDay(null); setSelectedService(null); }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
+              <button 
+                onClick={() => { setSelectedDay(null); setSelectedService(null); }} 
+                className="modal-close-btn"
+                style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}
+              >
+                <X size={20} />
+              </button>
+              
+              {selectedService === null ? (
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
+                    Serviços em {String(selectedDay).padStart(2, '0')}/{String(calendarDate.getMonth() + 1).padStart(2, '0')}/{calendarDate.getFullYear()}
+                  </h3>
+                  
+                  {scheduledRequests.filter(req => {
+                    const localDateStr = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+                    return req.scheduled_date === localDateStr;
+                  }).length === 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 0' }}>
+                      <CalendarIcon size={40} className="text-light" style={{ opacity: 0.5, marginBottom: '1rem' }} />
+                      <p style={{ color: 'var(--text-light)', textAlign: 'center', fontSize: '0.95rem' }}>
+                        Não há serviços agendados para este dia.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {scheduledRequests
+                        .filter(req => {
+                          const localDateStr = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+                          return req.scheduled_date === localDateStr;
+                        })
+                        .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time))
+                        .map(req => (
+                          <div 
+                            key={req.id} 
+                            onClick={() => setSelectedService(req)}
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              padding: '1rem', 
+                              backgroundColor: 'var(--bg-secondary)', 
+                              borderLeft: '4px solid #10b981', 
+                              borderRadius: 'var(--radius-md)', 
+                              cursor: 'pointer'
+                            }}
+                            className="calendar-mini-card"
+                          >
+                            <div>
+                              <h4 style={{ fontWeight: '600', color: 'var(--primary)', fontSize: '0.95rem' }}>{req.service_type}</h4>
+                              <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+                                Horário: {req.scheduled_time.substring(0, 5)}
+                              </p>
+                            </div>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--primary)' }}>
+                              {req.price ? `R$ ${parseFloat(req.price).toFixed(2)}` : 'A Combinar'}
+                            </span>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    <button 
+                      onClick={() => setSelectedService(null)} 
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0 }}
+                      title="Voltar para a lista"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--primary)', margin: 0 }}>
+                      Detalhes do Serviço
+                    </h3>
+                  </div>
+                  
+                  <div className="request-card" style={{ borderLeft: '4px solid var(--primary)', margin: 0, padding: '1rem' }}>
+                    <div className="req-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{selectedService.service_type}</h4>
+                      <span className="req-value" style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '1rem' }}>
+                        {selectedService.price ? `R$ ${parseFloat(selectedService.price).toFixed(2)}` : 'A Combinar'}
+                      </span>
+                    </div>
+                    <div className="req-details" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
+                      <p><strong>Tipo de Imóvel:</strong> {selectedService.home_type} ({selectedService.bedrooms} quartos, {selectedService.bathrooms} banheiros)</p>
+                      <p><strong>Endereço:</strong> {selectedService.address} - CEP: {selectedService.cep}</p>
+                      <p><strong>Data/Hora:</strong> {selectedService.scheduled_date} às {selectedService.scheduled_time?.substring(0, 5) || 'A definir'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </main>
       <Footer />

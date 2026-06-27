@@ -289,3 +289,65 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Modal and Calendar highlighted cells */
+.date-number.has-services {
+  background-color: #10b981;
+  color: var(--white) !important;
+  border-radius: var(--radius-full, 9999px);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background-color: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  animation: modalScaleUp 0.25s ease-out;
+}
+
+.calendar-mini-card {
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.calendar-mini-card:hover {
+  transform: translateY(-2px);
+  background-color: #e2e8f0;
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
