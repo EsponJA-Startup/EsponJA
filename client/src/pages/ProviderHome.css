@@ -188,9 +188,11 @@
 }
 
 .date-number {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
   font-weight: 600;
   color: var(--text-dark);
-  margin-bottom: 0.5rem;
 }
 
 .active-day {
@@ -225,6 +227,8 @@
   }
   .date-number {
     font-size: 0.875rem;
+    top: 0.25rem;
+    right: 0.25rem;
   }
   .calendar-event {
     font-size: 0.65rem;

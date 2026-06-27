@@ -59,6 +59,61 @@ export default function ProviderHome() {
     }
   };
 
+  const renderCalendar = () => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayIndex = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
+    
+    const monthNames = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    
+    const cells = [];
+    
+    for (let i = 0; i < firstDayIndex; i++) {
+      cells.push(<div key={`empty-${i}`} className="calendar-cell empty"></div>);
+    }
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday = day === currentDate.getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+      cells.push(
+        <div key={`day-${day}`} className={`calendar-cell ${isToday ? 'active-day' : ''}`}>
+          <span className="date-number">
+            {String(day).padStart(2, '0')}
+          </span>
+        </div>
+      );
+    }
+    
+    const weekDays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    
+    return (
+      <section className="calendar-section dashboard-card fade-in">
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+              {monthNames[currentMonth]} de {currentYear}
+            </h3>
+            <p className="text-light" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>Visualização mensal dos seus compromissos.</p>
+          </div>
+        </div>
+        
+        <div className="calendar-grid">
+          {weekDays.map(d => (
+            <div key={d} className="calendar-day-header">
+              {d}
+            </div>
+          ))}
+          {cells}
+        </div>
+      </section>
+    );
+  };
+
   if (loading) {
     return (
       <div className="provider-home">
@@ -119,6 +174,12 @@ export default function ProviderHome() {
             onClick={() => setActiveTab('agenda')}
           >
             <CalendarIcon size={18} /> Minha Agenda {scheduledRequests.length > 0 && <span className="badge-count">{scheduledRequests.length}</span>}
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'calendario' ? 'active' : ''}`}
+            onClick={() => setActiveTab('calendario')}
+          >
+            <CalendarIcon size={18} /> Calendário
           </button>
         </div>
 
@@ -188,6 +249,8 @@ export default function ProviderHome() {
             </div>
           </section>
         )}
+
+        {activeTab === 'calendario' && renderCalendar()}
 
       </main>
       <Footer />
