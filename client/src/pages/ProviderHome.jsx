@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Star, ShieldCheck, DollarSign, Calendar as CalendarIcon, CheckCircle, Clock } from 'lucide-react';
+import { Star, ShieldCheck, DollarSign, Calendar as CalendarIcon, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
 import './ProviderHome.css';
 
 export default function ProviderHome() {
   const [activeTab, setActiveTab] = useState('solicitacoes');
+  const [calendarDate, setCalendarDate] = useState(new Date());
   const [professionalData, setProfessionalData] = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,10 +60,25 @@ export default function ProviderHome() {
     }
   };
 
+  const handlePrevMonth = () => {
+    setCalendarDate(prev => {
+      const next = new Date(prev);
+      next.setMonth(prev.getMonth() - 1);
+      return next;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCalendarDate(prev => {
+      const next = new Date(prev);
+      next.setMonth(prev.getMonth() + 1);
+      return next;
+    });
+  };
+
   const renderCalendar = () => {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
+    const currentYear = calendarDate.getFullYear();
+    const currentMonth = calendarDate.getMonth();
     
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayIndex = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
@@ -79,7 +95,8 @@ export default function ProviderHome() {
     }
     
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = day === currentDate.getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+      const today = new Date();
+      const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
       cells.push(
         <div key={`day-${day}`} className={`calendar-cell ${isToday ? 'active-day' : ''}`}>
           <span className="date-number">
@@ -93,12 +110,28 @@ export default function ProviderHome() {
     
     return (
       <section className="calendar-section dashboard-card fade-in">
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+        <div className="card-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+          <p className="text-light" style={{ fontSize: '0.95rem', margin: 0 }}>Visualização mensal dos seus compromissos.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <button 
+              onClick={handlePrevMonth} 
+              className="btn btn-outline" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', width: '36px', height: '36px', padding: 0, border: '1px solid var(--border-color)', background: 'var(--white)', cursor: 'pointer' }}
+              title="Mês anterior"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--primary)', minWidth: '180px', textAlign: 'center', margin: 0 }}>
               {monthNames[currentMonth]} de {currentYear}
             </h3>
-            <p className="text-light" style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>Visualização mensal dos seus compromissos.</p>
+            <button 
+              onClick={handleNextMonth} 
+              className="btn btn-outline" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', width: '36px', height: '36px', padding: 0, border: '1px solid var(--border-color)', background: 'var(--white)', cursor: 'pointer' }}
+              title="Próximo mês"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         </div>
         
