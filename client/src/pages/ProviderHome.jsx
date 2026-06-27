@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Star, ShieldCheck, DollarSign, Calendar as CalendarIcon, CheckCircle, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Star, ShieldCheck, DollarSign, Calendar as CalendarIcon, CheckCircle, Clock, ChevronLeft, ChevronRight, X, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import './ProviderHome.css';
 
@@ -32,6 +32,53 @@ export default function ProviderHome() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const [reschedulingId, setReschedulingId] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+
+  const submitReschedule = async (id) => {
+    if (!rescheduleDate || !rescheduleTime) {
+      alert("Por favor, selecione data e hora para a alteração.");
+      return;
+    }
+    try {
+      await api.post(`/service-requests/${id}/reschedule-proposals`, {
+        proposed_date: rescheduleDate,
+        proposed_time: rescheduleTime
+      });
+      alert("Sugestão de alteração enviada com sucesso!");
+      setReschedulingId(null);
+      fetchDashboardData();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Erro ao solicitar alteração.");
+    }
+  };
+
+  const handleResolveProposal = async (proposalId, action) => {
+    try {
+      await api.post(`/reschedule-proposals/${proposalId}/${action}`);
+      alert(action === 'accept' ? "Alteração de data/hora aceita!" : "Alteração recusada.");
+      fetchDashboardData();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao responder à sugestão.");
+    }
+  };
+
+  const handleCancelRequest = async (id) => {
+    if (window.confirm("Você tem certeza que deseja cancelar este agendamento?")) {
+      try {
+        await api.post(`/service-requests/${id}/cancel`);
+        alert("Agendamento cancelado com sucesso.");
+        fetchDashboardData();
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.detail || "Erro ao cancelar agendamento.");
+      }
+    }
+  };
 
   const handleAcceptRequest = async (id) => {
     if (window.confirm("Você tem certeza que deseja aceitar este serviço?")) {
@@ -245,19 +292,110 @@ export default function ProviderHome() {
                   Sua agenda está vazia no momento.
                 </p>
               ) : (
-                scheduledRequests.map(req => (
-                  <div key={req.id} className="request-card" style={{ borderLeft: '4px solid var(--primary)' }}>
-                    <div className="req-header">
-                      <h4>{req.service_type}</h4>
-                      <span className="req-value" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>A Combinar</span>
+                scheduledRequests.map(req => {
+                  const isPast = (() => {
+                    if (!req.scheduled_date) return false;
+                    const [year, month, day] = req.scheduled_date.split('-').map(Number);
+                    const [hours, minutes] = (req.scheduled_time || '00:00').split(':').map(Number);
+                    const serviceDate = new Date(year, month - 1, day, hours, minutes);
+                    return new Date() >= serviceDate;
+                  })();
+
+                  const canCancelOrChange = !isPast && (() => {
+                    const [y, m, d] = req.scheduled_date.split('-').map(Number);
+                    const [h, min] = (req.scheduled_time || '00:00').split(':').map(Number);
+                    const serviceDate = new Date(y, m - 1, d, h, min);
+                    return serviceDate - new Date() >= 24 * 60 * 60 * 1000;
+                  })();
+
+                  const pending = req.pending_reschedule;
+
+                  return (
+                    <div key={req.id} className="request-card" style={{ borderLeft: '4px solid var(--primary)', opacity: isPast ? 0.75 : 1 }}>
+                      <div className="req-header">
+                        <h4>{req.service_type}</h4>
+                        <span className="req-value" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                          {req.price ? `R$ ${parseFloat(req.price).toFixed(2)}` : 'A Combinar'}
+                        </span>
+                      </div>
+                      <div className="req-details">
+                        <p><strong>Tipo de Imóvel:</strong> {req.home_type} ({req.bedrooms} quartos, {req.bathrooms} banheiros)</p>
+                        <p><strong>Endereço:</strong> {req.address} - CEP: {req.cep}</p>
+                        <p><strong>Data/Hora:</strong> {req.scheduled_date} às {req.scheduled_time?.substring(0, 5) || 'A definir'}</p>
+                      </div>
+
+                      {pending && (
+                        pending.requested_by_role === 'customer' ? (
+                          <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef9c3', borderLeft: '4px solid var(--accent, #facc15)', borderRadius: 'var(--radius-md)', fontSize: '0.85rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', color: '#713f12', marginBottom: '0.25rem' }}>
+                              <AlertTriangle size={14} className="text-accent" />
+                              <span>Alteração Sugerida pelo Cliente</span>
+                            </div>
+                            <p style={{ margin: '0 0 0.5rem 0', color: '#713f12' }}>
+                              Nova data sugerida: <strong>{pending.proposed_date}</strong> às <strong>{pending.proposed_time.substring(0, 5)}</strong>.
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              <button className="btn btn-sm" style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => handleResolveProposal(pending.id, 'reject')}>Recusar</button>
+                              <button className="btn btn-sm" style={{ backgroundColor: '#dcfce7', color: '#15803d', border: 'none', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => handleResolveProposal(pending.id, 'accept')}>Aceitar</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#f1f5f9', borderLeft: '4px solid #94a3b8', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', color: '#475569' }}>
+                            <p style={{ margin: 0 }}>
+                              <strong>Sugestão de alteração enviada:</strong> {pending.proposed_date} às {pending.proposed_time.substring(0, 5)} (Aguardando resposta do cliente).
+                            </p>
+                          </div>
+                        )
+                      )}
+
+                      {reschedulingId === req.id && (
+                        <div style={{ marginTop: '1rem', borderTop: '1px dashed var(--border-color)', paddingTop: '1rem' }}>
+                          <p style={{ fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem' }}>Sugerir Nova Data/Hora:</p>
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                            <input 
+                              type="date" 
+                              value={rescheduleDate} 
+                              onChange={(e) => setRescheduleDate(e.target.value)} 
+                              className="form-input" 
+                              style={{ padding: '0.4rem', fontSize: '0.85rem', flex: 1 }}
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                            <input 
+                              type="time" 
+                              value={rescheduleTime} 
+                              onChange={(e) => setRescheduleTime(e.target.value)} 
+                              className="form-input" 
+                              style={{ padding: '0.4rem', fontSize: '0.85rem', flex: 1 }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-outline btn-sm" onClick={() => setReschedulingId(null)}>Cancelar</button>
+                            <button className="btn btn-primary btn-sm" onClick={() => submitReschedule(req.id)}>Enviar Sugestão</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {canCancelOrChange && !pending && reschedulingId !== req.id && (
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                          <button 
+                            onClick={() => { setReschedulingId(req.id); setRescheduleDate(""); setRescheduleTime(""); }} 
+                            className="btn btn-outline btn-sm" 
+                            style={{ flex: 1, fontSize: '0.8rem', padding: '0.4rem' }}
+                          >
+                            Sugerir Alteração
+                          </button>
+                          <button 
+                            onClick={() => handleCancelRequest(req.id)} 
+                            className="btn btn-danger btn-sm" 
+                            style={{ flex: 1, fontSize: '0.8rem', padding: '0.4rem', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none' }}
+                          >
+                            Cancelar Serviço
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="req-details">
-                      <p><strong>Tipo de Imóvel:</strong> {req.home_type} ({req.bedrooms} quartos, {req.bathrooms} banheiros)</p>
-                      <p><strong>Endereço:</strong> {req.address} - CEP: {req.cep}</p>
-                      <p><strong>Data/Hora:</strong> {req.scheduled_date} às {req.scheduled_time?.substring(0, 5) || 'A definir'}</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </section>

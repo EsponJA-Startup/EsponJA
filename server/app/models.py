@@ -84,3 +84,12 @@ class ServiceRequestRejection(SQLModel, table=True):
     service_request_id: uuid.UUID = Field(foreign_key="servicerequest.id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class ServiceRescheduleProposal(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    service_request_id: uuid.UUID = Field(foreign_key="servicerequest.id")
+    proposed_date: date
+    proposed_time: time
+    requested_by_role: str  # "customer" or "provider"
+    status: str = Field(default="Pendente")  # "Pendente", "Aceito", "Recusado"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
