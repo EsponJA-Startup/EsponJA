@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, ChevronUp, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import api from '../services/api';
 import './Chatbot.css';
@@ -37,7 +37,8 @@ export default function Chatbot() {
 
   // Date and Time selection temp states
   const [tempDate, setTempDate] = useState('');
-  const [tempTime, setTempTime] = useState('');
+  const [tempHour, setTempHour] = useState('08');
+  const [tempMinute, setTempMinute] = useState('00');
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -66,7 +67,8 @@ export default function Chatbot() {
       scheduled_time: ''
     });
     setTempDate('');
-    setTempTime('');
+    setTempHour('08');
+    setTempMinute('00');
   };
 
   // Guidance steps transitions
@@ -144,12 +146,15 @@ export default function Chatbot() {
   };
 
   const handleTimeConfirm = async () => {
-    if (!tempTime) return;
-    setBookingData(prev => ({ ...prev, scheduled_time: tempTime }));
+    const hourStr = (tempHour || '08').padStart(2, '0');
+    const minStr = (tempMinute || '00').padStart(2, '0');
+    const finalTime = `${hourStr}:${minStr}`;
+
+    setBookingData(prev => ({ ...prev, scheduled_time: finalTime }));
     const nextMsgId = Date.now();
     setMessages(prev => [
       ...prev,
-      { id: nextMsgId, text: tempTime, sender: 'user' },
+      { id: nextMsgId, text: finalTime, sender: 'user' },
       { id: nextMsgId + 1, text: 'Processando as informações para criar o agendamento...', sender: 'bot' }
     ]);
     setStep(10);
@@ -176,7 +181,7 @@ export default function Chatbot() {
         { role: 'model', content: 'Em qual data você gostaria do serviço?' },
         { role: 'user', content: tempDate },
         { role: 'model', content: 'E qual o horário desejado para o início da limpeza?' },
-        { role: 'user', content: tempTime }
+        { role: 'user', content: finalTime }
       ];
 
       const response = await api.post('/chat', { history: simulatedHistory });
@@ -376,22 +381,117 @@ export default function Chatbot() {
         );
       case 9:
         return (
-          <div className="chatbot-datepicker-area">
-            <select 
-              className="chatbot-time-select"
-              value={tempTime}
-              onChange={(e) => setTempTime(e.target.value)}
-              disabled={isLoading}
-            >
-              <option value="">Selecione...</option>
-              {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+          <div className="chatbot-datepicker-area" style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <div className="chatbot-timepicker-container">
+              <div className="chatbot-time-column">
+                <button 
+                  type="button" 
+                  className="chatbot-time-arrow-btn" 
+                  onClick={() => {
+                    setTempHour(prev => {
+                      const val = (parseInt(prev || '0', 10) + 1) % 24;
+                      return String(val).padStart(2, '0');
+                    });
+                  }}
+                  disabled={isLoading}
+                >
+                  <ChevronUp size={16} />
+                </button>
+                <input 
+                  type="text" 
+                  className="chatbot-time-box-input"
+                  value={tempHour}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val === '') {
+                      setTempHour('');
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (num >= 0 && num <= 23) {
+                        setTempHour(val.slice(0, 2));
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!tempHour) setTempHour('08');
+                    else setTempHour(tempHour.padStart(2, '0'));
+                  }}
+                  disabled={isLoading}
+                  maxLength={2}
+                />
+                <button 
+                  type="button" 
+                  className="chatbot-time-arrow-btn"
+                  onClick={() => {
+                    setTempHour(prev => {
+                      const val = (parseInt(prev || '0', 10) - 1 + 24) % 24;
+                      return String(val).padStart(2, '0');
+                    });
+                  }}
+                  disabled={isLoading}
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+
+              <div className="chatbot-time-separator">:</div>
+
+              <div className="chatbot-time-column">
+                <button 
+                  type="button" 
+                  className="chatbot-time-arrow-btn"
+                  onClick={() => {
+                    setTempMinute(prev => {
+                      const val = (parseInt(prev || '0', 10) + 1) % 60;
+                      return String(val).padStart(2, '0');
+                    });
+                  }}
+                  disabled={isLoading}
+                >
+                  <ChevronUp size={16} />
+                </button>
+                <input 
+                  type="text" 
+                  className="chatbot-time-box-input"
+                  value={tempMinute}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val === '') {
+                      setTempMinute('');
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (num >= 0 && num <= 59) {
+                        setTempMinute(val.slice(0, 2));
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!tempMinute) setTempMinute('00');
+                    else setTempMinute(tempMinute.padStart(2, '0'));
+                  }}
+                  disabled={isLoading}
+                  maxLength={2}
+                />
+                <button 
+                  type="button" 
+                  className="chatbot-time-arrow-btn"
+                  onClick={() => {
+                    setTempMinute(prev => {
+                      const val = (parseInt(prev || '0', 10) - 1 + 60) % 60;
+                      return String(val).padStart(2, '0');
+                    });
+                  }}
+                  disabled={isLoading}
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+            </div>
+
             <button 
               className="chatbot-confirm-btn" 
               onClick={handleTimeConfirm}
-              disabled={!tempTime || isLoading}
+              disabled={isLoading}
             >
               Confirmar
             </button>

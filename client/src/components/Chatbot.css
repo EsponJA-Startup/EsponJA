@@ -331,3 +331,71 @@
   background-color: #cbd5e1;
   cursor: not-allowed;
 }
+
+/* Custom Time Picker Styles */
+.chatbot-timepicker-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+}
+
+.chatbot-time-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.chatbot-time-arrow-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, transform 0.1s;
+}
+
+.chatbot-time-arrow-btn:hover {
+  color: var(--primary-color, #2563eb);
+}
+
+.chatbot-time-arrow-btn:active {
+  transform: scale(0.9);
+}
+
+.chatbot-time-box-input {
+  width: 36px;
+  height: 36px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  background-color: white;
+  color: #1e293b;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.chatbot-time-box-input:focus {
+  border-color: var(--primary-color, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.chatbot-time-separator {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #64748b;
+  align-self: center;
+  margin-bottom: 2px;
+}
