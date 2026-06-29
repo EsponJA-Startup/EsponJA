@@ -258,3 +258,76 @@
 .chat-message.bot li {
   margin-bottom: 4px;
 }
+
+/* Scripted Interactive Elements */
+.chatbot-interactive-area {
+  width: 100%;
+  padding: 0.8rem 1.2rem;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.chatbot-opt-btn {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chatbot-opt-btn:hover {
+  background-color: var(--primary-color, #2563eb);
+  color: white;
+  border-color: var(--primary-color, #2563eb);
+}
+
+.chatbot-datepicker-area {
+  width: 100%;
+  padding: 0.8rem 1.2rem;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.chatbot-date-input, .chatbot-time-select {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  outline: none;
+  background-color: #f8fafc;
+  font-family: inherit;
+}
+
+.chatbot-confirm-btn {
+  background: var(--primary-color, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.chatbot-confirm-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.chatbot-confirm-btn:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
