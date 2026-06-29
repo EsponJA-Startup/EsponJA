@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Home } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Home, LogIn } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './Navbar.css';
 
@@ -8,7 +8,9 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const userRole = localStorage.getItem('user_role');
+  const userName = localStorage.getItem('user_name');
 
   const handleLogout = async () => {
     try {
@@ -17,7 +19,8 @@ export default function Navbar() {
       console.error("Logout failed", err);
     }
     localStorage.removeItem('user_role');
-    window.location.href = '/login';
+    localStorage.removeItem('user_name');
+    navigate('/login');
   };
 
   const isHome = location.pathname === '/';
@@ -65,12 +68,18 @@ export default function Navbar() {
                   <Link to="/provider/home" className="nav-link hide-mobile">Meus Serviços</Link>
                 </>
               )}
+              
+              {userName && (
+                <span className="nav-greeting hide-mobile">Olá, {userName.split(' ')[0]}</span>
+              )}
               <button onClick={handleLogout} className="btn btn-secondary">Sair</button>
             </>
           ) : (
             <>
-              <Link to="/register?type=provider" className="nav-link hide-mobile">Seja um Profissional</Link>
-              <Link to="/login" className="btn btn-primary">Entrar</Link>
+              <a href="/#cta" className="btn btn-primary">Entrar<span className="hide-mobile"> na Fila</span></a>
+              <Link to="/login" className="nav-link hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <LogIn size={18} /> Entrar
+              </Link>
             </>
           )}
           

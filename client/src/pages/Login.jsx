@@ -24,6 +24,9 @@ export default function Login() {
       if (response.data.user_id) {
         localStorage.setItem('user_id', response.data.user_id);
       }
+      if (response.data.name) {
+        localStorage.setItem('user_name', response.data.name);
+      }
       localStorage.setItem('user_role', response.data.role);
 
       // Since it's MVP, we just redirect based on role
@@ -88,7 +91,7 @@ export default function Login() {
           </form>
 
           <div className="form-footer">
-            Não tem uma conta? <Link to="/register" className="auth-link">Cadastre-se</Link>
+            Primeiro Acesso? <Link to="/primeiro-acesso" className="auth-link">Clique Aqui</Link>
           </div>
         </div>
       </main>

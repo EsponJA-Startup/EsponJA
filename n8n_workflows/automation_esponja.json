@@ -1,0 +1,69 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "waitlist-esponja",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        250
+      ],
+      "id": "waitlist-webhook-node-id",
+      "name": "Webhook Waitlist"
+    },
+    {
+      "parameters": {
+        "fromEmail": "renzofilho2004z@gmail.com",
+        "toEmail": "={{ $json.body.email }}",
+        "subject": "=Acesso à lista de espera do EsponJA",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">\n    <h2 style=\"color: #2c3e50; text-align: center;\">Você está na fila do EsponJA! 🧽</h2>\n    <p style=\"color: #555; font-size: 16px;\">Olá!</p>\n    <p style=\"color: #555; font-size: 16px;\">Seu código de confirmação é: <strong>{{ $json.body.first_access_password }}</strong></p>\n    <p style=\"color: #777; font-size: 14px; text-align: center;\">\n        Guarde este código para poder acessar seu convite quando ele for liberado.\n    </p>\n    <hr style=\"border: 0; border-top: 1px solid #eee; margin: 20px 0;\">\n    <p style=\"color: #999; font-size: 12px; text-align: center;\">Equipe EsponJA</p>\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        250
+      ],
+      "id": "waitlist-email-node-id",
+      "name": "Send Waitlist Email",
+      "credentials": {
+        "smtp": {
+          "id": "AOkKKXQ9evhzgr63",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Waitlist": {
+      "main": [
+        [
+          {
+            "node": "Send Waitlist Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c9464c78-3bee-4ebc-9b11-4aee86fe8a32",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "844b8080ba9b8c5b4dc7c3fdbebc0b0146519f97cbad1d1363709104c70f6b15"
+  },
+  "id": "449Rkgzubij4miJ6",
+  "tags": []
+}

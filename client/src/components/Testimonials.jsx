@@ -6,19 +6,19 @@ export default function Testimonials() {
   const testimonials = [
     {
       text: "Eu costumava depender de grupos de WhatsApp e sempre tinha medo de deixar estranhos entrarem na minha casa. Com o EsponJÁ, saber que todos passam por uma verificação de antecedentes me dá paz de espírito absoluta.",
-      author: "Mariana S.",
+      author: "Mariana",
       role: "Dona de Casa",
       initial: "M"
     },
     {
-      text: "Contratei um eletricista e fiquei impressionado com a pontualidade. O sistema de confirmação ativa realmente funciona! O trabalho foi perfeito e, honestamente, tirou todo o estresse do processo.",
-      author: "Carlos P.",
-      role: "Locatário",
+      text: "Contratei uma diarista e fiquei impressionado com a pontualidade. O sistema de confirmação ativa realmente funciona! O trabalho foi perfeito e, honestamente, tirou todo o estresse do processo.",
+      author: "Carlos",
+      role: "Estudante",
       initial: "C"
     },
     {
-      text: "Anteriormente, tive um serviço de encanamento mal feito e o cara simplesmente desapareceu. A garantia de refação do EsponJÁ me deu confiança para contratar de novo, e desta vez o profissional foi excelente.",
-      author: "Juliana T.",
+      text: "Minha casa nunca esteve tão limpa! A profissional deixou tudo impecável e cheiroso. A garantia do EsponJÁ me deu a confiança para contratar, e agora recomendo para todas as minhas amigas.",
+      author: "Juliana",
       role: "Proprietária",
       initial: "J"
     }
@@ -28,7 +28,7 @@ export default function Testimonials() {
     <section id="testimonials" className="section testimonials">
       <div className="container">
         <div className="text-center">
-          <h2 className="section-title">Confiado por Centenas de Lares</h2>
+          <h2 className="section-title">Confiado por Usuários</h2>
           <p className="section-subtitle">
             Veja como estamos mudando a forma como as pessoas contratam serviços domésticos, focando em confiança, qualidade e garantia.
           </p>

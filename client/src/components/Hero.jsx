@@ -16,30 +16,14 @@ export default function Hero() {
         </h1>
         
         <p className="hero-subtitle">
-          Diga adeus à insegurança e aos serviços mal executados. O EsponJÁ conecta você com profissionais rigorosamente verificados. Qualidade garantida, zero risco.
+          Diga adeus à insegurança e às faxinas mal executadas. O EsponJÁ conecta você com profissionais de limpeza rigorosamente verificadas. Qualidade garantida, zero risco.
         </p>
         
         <div className="hero-actions">
-          <a href="#cta" className="btn btn-primary">Encontrar um Profissional</a>
+          <a href="#cta" className="btn btn-primary">Venha ser EsponJA</a>
           <a href="#how-it-works" className="btn btn-secondary">Veja Como Funciona</a>
         </div>
         
-        <div className="hero-image-wrapper">
-          <img 
-            src="/hero-image.png" 
-            alt="Profissional verificado e amigável dentro de uma casa moderna" 
-            className="hero-image"
-          />
-          <div className="trust-floating-badge">
-            <div className="icon-box">
-              <Star fill="currentColor" size={24} />
-            </div>
-            <div className="trust-text">
-              <h4>Mais Bem Avaliados</h4>
-              <p>Baseado em mais de 500 avaliações</p>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

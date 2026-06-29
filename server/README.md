@@ -106,6 +106,35 @@ Security is a top priority for the EsponJÁ MVP. We use a robust **JWT (JSON Web
 - **Data Validation & DoS Protection**: Thanks to Pydantic and `SQLModel`, every incoming request is strictly validated. We enforce max string lengths (e.g., `Field(max_length=255)`) to prevent attackers from sending massive payloads that could exhaust server memory (Denial of Service).
 - **Timing Attack Mitigation**: Sensitive checks, like the Admin password login, use `hmac.compare_digest()` to securely compare strings in constant time.
 
+
+## 🤖 Automation Setup (n8n)
+
+EsponJÁ uses **n8n** for handling email sending and other automated workflows. Follow these steps to set up your local environment:
+
+### 1. Start the Containers
+From the root directory of the project (where the `docker-compose.yml` is located), spin up Docker:
+```bash
+sudo docker-compose up -d
+```
+Access the interface at `http://localhost:5678`.
+
+### 2. Import the Workflow
+Inside n8n, go to **Workflow Settings > Import from File** and select the `.json` file located in the `n8n_workflows/` folder.
+
+### 3. Configure Email Credentials
+*For security reasons, credentials are not committed to the repository.*
+- On the **Send Email** node, go to **Set up credential > Create New (SMTP)**.
+- **Host:** `smtp.gmail.com`
+- **Port:** `465` (with SSL/TLS enabled)
+- **User:** Your testing email address
+- **Password:** Your Google App Password (do not use your main personal password).
+
+### 4. Activate the Workflow
+- Click the **Publish** button (top right corner) to activate the automation.
+- Open the **Webhook** node, switch to **Production URL**, and copy the link.
+- Update this URL in your backend code (`main.py` or your `.env` file) to ensure production-ready communication.
+
+
 ---
 
 Happy coding! 🧽✨

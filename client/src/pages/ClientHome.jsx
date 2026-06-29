@@ -153,7 +153,7 @@ export default function ClientHome() {
                       </span>
                     </div>
                     <p className="appt-pro">
-                      com <strong>{appt.professional_id ? "Profissional Atribuído" : "Aguardando Profissional"}</strong>
+                      com <strong>{appt.professional_name ? appt.professional_name : (appt.professional_id ? "Profissional Atribuído" : "Aguardando Profissional")}</strong>
                     </p>
                     <div className="appt-details">
                       <span><Calendar size={16} /> {appt.scheduled_date}</span>

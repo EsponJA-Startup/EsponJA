@@ -22,7 +22,7 @@ export default function Features() {
     {
       icon: <Sparkles size={32} />,
       title: 'Garantia de Refação',
-      description: 'Se o serviço for mal executado ou incompleto, garantimos a refação ou fornecemos suporte imediato.'
+      description: 'Se a faxina for mal executada ou incompleta, garantimos a refação ou fornecemos suporte imediato.'
     }
   ];
 
