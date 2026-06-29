@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import api from '../services/api';
 import './Chatbot.css';
 
 export default function Chatbot() {
@@ -70,35 +71,20 @@ export default function Chatbot() {
         }
       }
 
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ history: validHistory }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMessages((prev) => [
-          ...prev, 
-          { id: Date.now() + 1, text: data.reply, sender: 'bot' }
-        ]);
-        if (data.booked) {
-          setHasBooked(true);
-        }
-      } else {
-        setMessages((prev) => [
-          ...prev, 
-          { id: Date.now() + 1, text: 'Desculpe, ocorreu um erro na comunicação com o servidor.', sender: 'bot', isError: true }
-        ]);
+      const response = await api.post('/chat', { history: validHistory });
+      setMessages((prev) => [
+        ...prev, 
+        { id: Date.now() + 1, text: response.data.reply, sender: 'bot' }
+      ]);
+      if (response.data.booked) {
+        setHasBooked(true);
       }
     } catch (error) {
       console.error("Erro ao enviar mensagem para a API:", error);
+      const errorMsg = error.response?.data?.detail || 'Desculpe, não consegui me conectar ao servidor.';
       setMessages((prev) => [
         ...prev, 
-        { id: Date.now() + 1, text: 'Desculpe, não consegui me conectar ao servidor.', sender: 'bot', isError: true }
+        { id: Date.now() + 1, text: errorMsg, sender: 'bot', isError: true }
       ]);
     } finally {
       setIsLoading(false);
