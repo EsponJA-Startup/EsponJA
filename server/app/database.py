@@ -51,10 +51,3 @@ def create_db_and_tables():
 def get_session():
     with Session(engine) as session:
         yield session
-
-# For Vercel Serverless environment where FastAPI lifespan is not triggered,
-# we need to ensure the database and tables are created/migrated on module load.
-try:
-    create_db_and_tables()
-except Exception as e:
-    print(f"Failed to auto-migrate on startup: {e}")
