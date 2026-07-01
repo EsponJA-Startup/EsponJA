@@ -8,7 +8,9 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 # 2. Configura os argumentos de conexão e a URL dependendo do ambiente
 if not DATABASE_URL:
     # --- MODO LOCAL (Sua máquina) ---
-    DATABASE_URL = "sqlite:///./database.db"
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    db_path = os.path.join(base_dir, "database.db").replace("\\", "/")
+    DATABASE_URL = f"sqlite:///{db_path}"
     connect_args = {"check_same_thread": False}  # Exigência apenas do SQLite
 else:
     # --- MODO PRODUÇÃO (Render + Neon) ---
