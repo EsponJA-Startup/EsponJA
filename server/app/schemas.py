@@ -24,6 +24,14 @@ class ProfessionalResponse(BaseModel):
     wallet_available: Decimal
     wallet_escrow: Decimal
 
+class RescheduleProposalResponse(BaseModel):
+    id: uuid.UUID
+    service_request_id: uuid.UUID
+    proposed_date: date
+    proposed_time: time
+    requested_by_role: str
+    status: str
+
 class ServiceRequestResponse(BaseModel):
     id: uuid.UUID
     client_id: uuid.UUID
@@ -41,6 +49,7 @@ class ServiceRequestResponse(BaseModel):
     price: Decimal | None = None
     payment_status: str
     professional_name: str | None = None
+    pending_reschedule: RescheduleProposalResponse | None = None
 
 class ServiceRequestPublicResponse(BaseModel):
     id: uuid.UUID
@@ -50,8 +59,8 @@ class ServiceRequestPublicResponse(BaseModel):
     bedrooms: str
     bathrooms: str
     has_pets: bool
-    cep: str  # CEP is usually broad enough (by street/region), we hide full address
+    cep: str
     scheduled_date: date
     scheduled_time: time
     price: Decimal | None = None
-    # Omitted fields: client_id, address, professional_id, payment_status
+    pending_reschedule: RescheduleProposalResponse | None = None

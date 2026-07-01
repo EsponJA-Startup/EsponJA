@@ -17,12 +17,12 @@ import bcrypt
 import httpx
 import uuid
 import secrets
-from datetime import date, time
+from datetime import date, time, datetime, timedelta
 
 from app.database import create_db_and_tables, get_session
-from app.models import Client, Professional, Waitlist, ServiceRequest
+from app.models import Client, Professional, Waitlist, ServiceRequest, ServiceRequestRejection, ServiceRescheduleProposal
 from app.auth import create_access_token, get_current_user
-from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse
+from app.schemas import ClientResponse, ProfessionalResponse, ServiceRequestResponse, ServiceRequestPublicResponse, RescheduleProposalResponse
 
 
 
@@ -100,6 +100,7 @@ class VerifyEmailRequest(BaseModel):
 
 class ServiceRequestCreate(BaseModel):
     client_id: uuid.UUID | None = None
+    professional_id: uuid.UUID | None = None
     service_type: str = Field(max_length=100)
     home_type: str = Field(max_length=100)
     bedrooms: str = Field(max_length=50)
@@ -380,6 +381,22 @@ def create_service_request(request: Request, data: ServiceRequestCreate, session
     session.refresh(db_request)
     return db_request
 
+def get_pending_reschedule_data(session: Session, service_request_id: uuid.UUID) -> dict | None:
+    proposal = session.exec(select(ServiceRescheduleProposal).where(
+        (ServiceRescheduleProposal.service_request_id == service_request_id) &
+        (ServiceRescheduleProposal.status == "Pendente")
+    )).first()
+    if proposal:
+        return {
+            "id": proposal.id,
+            "service_request_id": proposal.service_request_id,
+            "proposed_date": proposal.proposed_date,
+            "proposed_time": proposal.proposed_time,
+            "requested_by_role": proposal.requested_by_role,
+            "status": proposal.status
+        }
+    return None
+
 @app.get("/api/service-requests")
 def get_service_requests(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
     user_id = current_user["user_id"]
@@ -393,6 +410,7 @@ def get_service_requests(session: Session = Depends(get_session), current_user: 
             if r.professional_id:
                 p = session.get(Professional, r.professional_id)
                 d["professional_name"] = p.name if p else None
+            d["pending_reschedule"] = get_pending_reschedule_data(session, r.id)
             result.append(ServiceRequestResponse(**d))
         return result
     elif role == "customer":
@@ -403,19 +421,34 @@ def get_service_requests(session: Session = Depends(get_session), current_user: 
             if r.professional_id:
                 p = session.get(Professional, r.professional_id)
                 d["professional_name"] = p.name if p else None
+            d["pending_reschedule"] = get_pending_reschedule_data(session, r.id)
             result.append(ServiceRequestResponse(**d))
         return result
     else: # provider
         requests = session.exec(select(ServiceRequest).where(
-            (ServiceRequest.status == "Pendente") | (ServiceRequest.professional_id == uuid.UUID(user_id))
+            (ServiceRequest.professional_id == uuid.UUID(user_id)) |
+            ((ServiceRequest.status == "Pendente") & (ServiceRequest.professional_id == None))
         )).all()
+        
+        # Filter out requests rejected by the current professional
+        rejected_ids = set(session.exec(select(ServiceRequestRejection.service_request_id).where(
+            ServiceRequestRejection.professional_id == uuid.UUID(user_id)
+        )).all())
         
         result = []
         for r in requests:
-            if r.status == "Pendente" and str(r.professional_id) != user_id:
-                result.append(ServiceRequestPublicResponse(**r.model_dump()))
-            else:
-                result.append(ServiceRequestResponse(**r.model_dump()))
+            if r.id not in rejected_ids:
+                if r.status == "Pendente" and str(r.professional_id) != user_id:
+                    d = r.model_dump()
+                    d["pending_reschedule"] = get_pending_reschedule_data(session, r.id)
+                    result.append(ServiceRequestPublicResponse(**d))
+                else:
+                    d = r.model_dump()
+                    if r.professional_id:
+                        p = session.get(Professional, r.professional_id)
+                        d["professional_name"] = p.name if p else None
+                    d["pending_reschedule"] = get_pending_reschedule_data(session, r.id)
+                    result.append(ServiceRequestResponse(**d))
         return result
 
 @app.get("/api/service-requests/{request_id}")
@@ -430,7 +463,12 @@ def get_service_request(request_id: uuid.UUID, session: Session = Depends(get_se
     if role == "customer" and str(db_request.client_id) != user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    return ServiceRequestResponse(**db_request.model_dump())
+    d = db_request.model_dump()
+    if db_request.professional_id:
+        p = session.get(Professional, db_request.professional_id)
+        d["professional_name"] = p.name if p else None
+    d["pending_reschedule"] = get_pending_reschedule_data(session, db_request.id)
+    return ServiceRequestResponse(**d)
 
 @app.patch("/api/service-requests/{request_id}")
 def update_service_request(request_id: uuid.UUID, update_data: ServiceRequestUpdate, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
@@ -481,6 +519,37 @@ def delete_service_request(request_id: uuid.UUID, session: Session = Depends(get
     session.commit()
     return {"message": "Service request deleted successfully"}
 
+@app.post("/api/service-requests/{request_id}/reject")
+def reject_service_request(request_id: uuid.UUID, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "provider":
+        raise HTTPException(status_code=403, detail="Apenas prestadores podem recusar serviços.")
+        
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if db_request.status != "Pendente":
+        raise HTTPException(status_code=400, detail="Apenas serviços pendentes podem ser recusados.")
+        
+    user_id = current_user["user_id"]
+    professional_id = uuid.UUID(user_id)
+    
+    # Check if already rejected
+    existing = session.exec(select(ServiceRequestRejection).where(
+        (ServiceRequestRejection.professional_id == professional_id) & 
+        (ServiceRequestRejection.service_request_id == request_id)
+    )).first()
+    
+    if not existing:
+        rejection = ServiceRequestRejection(
+            professional_id=professional_id,
+            service_request_id=request_id
+        )
+        session.add(rejection)
+        session.commit()
+        
+    return {"message": "Service request rejected successfully"}
+
 @app.get("/api/professionals/me", response_model=ProfessionalResponse)
 def get_professional_me(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "provider":
@@ -492,10 +561,19 @@ def get_professional_me(session: Session = Depends(get_session), current_user: d
 
 @app.get("/api/professionals", response_model=list[ProfessionalResponse])
 def get_professionals(session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
+    if current_user["role"] not in ["admin", "customer"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     professionals = session.exec(select(Professional)).all()
     return professionals
+
+@app.get("/api/professionals/{professional_id}", response_model=ProfessionalResponse)
+def get_professional_by_id(professional_id: uuid.UUID, session: Session = Depends(get_session), current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "customer"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    professional = session.get(Professional, professional_id)
+    if not professional:
+        raise HTTPException(status_code=404, detail="Professional not found")
+    return professional
 
 @app.get("/api/clients", response_model=list[ClientResponse])
 def get_clients(
@@ -506,6 +584,169 @@ def get_clients(
         raise HTTPException(status_code=403, detail="Not authorized")
     clients = session.exec(select(Client)).all()
     return clients
+
+class RescheduleProposalCreate(BaseModel):
+    proposed_date: date
+    proposed_time: time
+
+@app.post("/api/service-requests/{request_id}/reschedule-proposals", response_model=RescheduleProposalResponse)
+def create_reschedule_proposal(
+    request_id: uuid.UUID,
+    data: RescheduleProposalCreate,
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role not in ["customer", "provider"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if role == "customer" and str(db_request.client_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if role == "provider" and str(db_request.professional_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    service_datetime = datetime.combine(db_request.scheduled_date, db_request.scheduled_time)
+    if service_datetime - datetime.now() < timedelta(hours=24):
+        raise HTTPException(status_code=400, detail="Proposals must be requested at least 24 hours in advance")
+        
+    existing_pending = session.exec(select(ServiceRescheduleProposal).where(
+        (ServiceRescheduleProposal.service_request_id == request_id) &
+        (ServiceRescheduleProposal.status == "Pendente")
+    )).first()
+    if existing_pending:
+        raise HTTPException(status_code=400, detail="There is already a pending reschedule proposal for this service")
+        
+    proposal = ServiceRescheduleProposal(
+        service_request_id=request_id,
+        proposed_date=data.proposed_date,
+        proposed_time=data.proposed_time,
+        requested_by_role=role,
+        status="Pendente"
+    )
+    session.add(proposal)
+    session.commit()
+    session.refresh(proposal)
+    return proposal
+
+
+@app.post("/api/reschedule-proposals/{proposal_id}/accept")
+def accept_reschedule_proposal(
+    proposal_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role not in ["customer", "provider"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    proposal = session.get(ServiceRescheduleProposal, proposal_id)
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Reschedule proposal not found")
+        
+    if proposal.status != "Pendente":
+        raise HTTPException(status_code=400, detail="Proposal is already resolved")
+        
+    db_request = session.get(ServiceRequest, proposal.service_request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if proposal.requested_by_role == role:
+        raise HTTPException(status_code=400, detail="You cannot accept your own reschedule proposal")
+        
+    if role == "customer" and str(db_request.client_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if role == "provider" and str(db_request.professional_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    service_datetime = datetime.combine(db_request.scheduled_date, db_request.scheduled_time)
+    if service_datetime - datetime.now() < timedelta(hours=24):
+        raise HTTPException(status_code=400, detail="Actions must be performed at least 24 hours in advance")
+        
+    db_request.scheduled_date = proposal.proposed_date
+    db_request.scheduled_time = proposal.proposed_time
+    session.add(db_request)
+    
+    proposal.status = "Aceito"
+    session.add(proposal)
+    
+    session.commit()
+    return {"message": "Reschedule proposal accepted and updated successfully"}
+
+
+@app.post("/api/reschedule-proposals/{proposal_id}/reject")
+def reject_reschedule_proposal(
+    proposal_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role not in ["customer", "provider"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    proposal = session.get(ServiceRescheduleProposal, proposal_id)
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Reschedule proposal not found")
+        
+    if proposal.status != "Pendente":
+        raise HTTPException(status_code=400, detail="Proposal is already resolved")
+        
+    db_request = session.get(ServiceRequest, proposal.service_request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if proposal.requested_by_role == role:
+        raise HTTPException(status_code=400, detail="You cannot reject your own reschedule proposal")
+        
+    if role == "customer" and str(db_request.client_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if role == "provider" and str(db_request.professional_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    proposal.status = "Recusado"
+    session.add(proposal)
+    session.commit()
+    return {"message": "Reschedule proposal rejected successfully"}
+
+
+@app.post("/api/service-requests/{request_id}/cancel")
+def cancel_service_request(
+    request_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user["user_id"]
+    role = current_user["role"]
+    
+    if role not in ["customer", "provider"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    db_request = session.get(ServiceRequest, request_id)
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Service request not found")
+        
+    if role == "customer" and str(db_request.client_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if role == "provider" and str(db_request.professional_id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    service_datetime = datetime.combine(db_request.scheduled_date, db_request.scheduled_time)
+    if service_datetime - datetime.now() < timedelta(hours=24):
+        raise HTTPException(status_code=400, detail="Cancellations must be performed at least 24 hours in advance")
+        
+    db_request.status = "Cancelado"
+    session.add(db_request)
+    session.commit()
+    return {"message": "Service request cancelled successfully"}
 
 
 

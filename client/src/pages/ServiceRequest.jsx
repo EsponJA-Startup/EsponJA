@@ -12,6 +12,7 @@ export default function ServiceRequest() {
   const initialService = queryParams.get("type") || "Limpeza Padrão";
   const editId = queryParams.get("edit");
 
+  const [bookingProfessional, setBookingProfessional] = useState(null);
   const [formData, setFormData] = useState({
     serviceType: initialService,
     homeType: 'apartamento',
@@ -23,6 +24,24 @@ export default function ServiceRequest() {
     date: '',
     time: ''
   });
+
+  useEffect(() => {
+    const professionalId = queryParams.get("professional_id");
+    if (professionalId) {
+      const fetchProfessional = async () => {
+        try {
+          const res = await api.get(`/professionals/${professionalId}`);
+          setBookingProfessional(res.data);
+          if (res.data.specialty) {
+            setFormData(prev => ({ ...prev, serviceType: res.data.specialty }));
+          }
+        } catch (err) {
+          console.error("Failed to load professional data", err);
+        }
+      };
+      fetchProfessional();
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (editId) {
@@ -59,6 +78,7 @@ export default function ServiceRequest() {
     e.preventDefault();
 
     try {
+      const professionalId = queryParams.get("professional_id");
       const payload = {
         service_type: formData.serviceType,
         home_type: formData.homeType,
@@ -68,7 +88,8 @@ export default function ServiceRequest() {
         cep: formData.cep,
         address: formData.address,
         scheduled_date: formData.date,
-        scheduled_time: formData.time.length === 5 ? formData.time + ":00" : formData.time
+        scheduled_time: formData.time.length === 5 ? formData.time + ":00" : formData.time,
+        professional_id: professionalId || null
       };
 
       if (editId) {
@@ -91,8 +112,29 @@ export default function ServiceRequest() {
       <main className="request-main container">
         <div className="request-header">
           <h2>{editId ? "Editar Serviço" : "Detalhes do Serviço"}</h2>
-          <p>Preencha os dados abaixo para encontrarmos o profissional ideal para sua {formData.serviceType}.</p>
+          <p>
+            {bookingProfessional 
+              ? `Preencha os dados abaixo para agendar seu serviço diretamente com ${bookingProfessional.name}.`
+              : `Preencha os dados abaixo para encontrarmos o profissional ideal para sua ${formData.serviceType}.`
+            }
+          </p>
         </div>
+
+        {bookingProfessional && (
+          <div className="dashboard-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', borderLeft: '4px solid var(--primary)', padding: '1rem' }}>
+            <img 
+              src={bookingProfessional.profile_picture_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(bookingProfessional.name)}&background=003366&color=fff&size=128`} 
+              alt={bookingProfessional.name} 
+              style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+            />
+            <div>
+              <h4 style={{ margin: 0, fontWeight: 'bold', color: 'var(--primary)' }}>{bookingProfessional.name}</h4>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                {bookingProfessional.specialty || 'Profissional'} • ★ {bookingProfessional.rating.toFixed(1)}
+              </p>
+            </div>
+          </div>
+        )}
 
         <form className="request-form dashboard-card" onSubmit={handleSubmit}>
           <div className="form-section">

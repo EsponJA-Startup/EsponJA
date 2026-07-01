@@ -24,7 +24,7 @@ engine = create_engine(DATABASE_URL, echo=True, connect_args=connect_args)
 
 def create_db_and_tables():
     # Importa os modelos para o SQLModel criar as tabelas
-    from .models import Client, Professional, Waitlist
+    from .models import Client, Professional, Waitlist, ServiceRequestRejection, ServiceRescheduleProposal
     SQLModel.metadata.create_all(engine)
     
     # Migração automática para o Postgres (Render/Neon)
