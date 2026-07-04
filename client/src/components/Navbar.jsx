@@ -57,16 +57,10 @@ export default function Navbar() {
                 <Link to="/admin" className="nav-link hide-mobile">Dashboard</Link>
               )}
               {userRole === 'customer' && (
-                <>
-                  <Link to="/client/home" className="nav-link hide-mobile">Dashboard</Link>
-                  <Link to="/client/home" className="nav-link hide-mobile">Meus Pedidos</Link>
-                </>
+                <Link to="/client/home" className="nav-link hide-mobile">Meus Pedidos</Link>
               )}
               {userRole === 'provider' && (
-                <>
-                  <Link to="/provider/home" className="nav-link hide-mobile">Dashboard</Link>
-                  <Link to="/provider/home" className="nav-link hide-mobile">Meus Serviços</Link>
-                </>
+                <Link to="/provider/home" className="nav-link hide-mobile">Meus Serviços</Link>
               )}
               
               {userName && (

@@ -95,3 +95,49 @@
   text-align: center;
   border-left: 4px solid var(--primary);
 }
+
+/* Password matching indicators */
+.form-input.input-success {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.form-input.input-success:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+.form-input.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.form-input.input-error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+.password-match-indicator {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.password-match-indicator.match {
+  color: #10b981;
+}
+
+.password-match-indicator.no-match {
+  color: #ef4444;
+}
+
+.password-requirements {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-light, #64748b);
+  margin-top: 0.4rem;
+  line-height: 1.25;
+}
