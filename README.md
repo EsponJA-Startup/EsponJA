@@ -91,7 +91,7 @@ Para detalhes completos de configuração de cada camada (variáveis de ambiente
 
 A documentação técnica aprofundada está na **Wiki** do repositório:
 
-- [Home / Overview](https://github.com/EsponJA-Startup/EsponJA/wiki/00-Home-Overview) — proposta de valor, stack e arquitetura macro
+- [Home / Overview](https://github.com/EsponJA-Startup/EsponJA/wiki/Home) — proposta de valor, stack e arquitetura macro
 - [Modelagem de Dados](https://github.com/EsponJA-Startup/EsponJA/wiki/01-Modelagem-de-Dados) — entidades e diagrama ER
 - [Autenticação e Segurança](https://github.com/EsponJA-Startup/EsponJA/wiki/02-Autenticacao-e-Seguranca) — JWT, cookies `HttpOnly`, fluxo de Primeiro Acesso e RBAC
 - [Fluxos de Negócio](https://github.com/EsponJA-Startup/EsponJA/wiki/03-Fluxos-de-Negocio) — agendamento, integração com n8n e chatbot com Gemini
