@@ -28,7 +28,7 @@ Para a documentação técnica completa — arquitetura, modelagem de dados, aut
 
 O EsponJÁ nasceu como projeto da disciplina **PMI3817 – Empreendedorismo e Inovação na Engenharia**, na Universidade de São Paulo, como exercício prático de validação de um modelo de negócio real (MVP, princípios de Lean Startup, Painted Door Test para novas categorias de serviço, etc.).
 
-A partir daí, o projeto passou a ser utilizado **também** como estudo de caso na disciplina de **Introdução ao Desenvolvimento de Software (IntroDev)**, do Departamento de Ciência da Computação do IME-USP, servindo como exemplo prático de arquitetura full-stack, modelagem de dados e boas práticas de engenharia de software.
+A partir daí, o projeto passou a ser utilizado **também** como estudo de caso na disciplina de **MAC0350 - Introdução ao Desenvolvimento de Sistemas de Software**, do Departamento de Ciência da Computação do IME-USP, servindo como exemplo prático de arquitetura full-stack, modelagem de dados e boas práticas de engenharia de software.
 
 Por isso, algumas decisões de escopo e simplificações no código refletem esse contexto didático — é um MVP acadêmico em evolução contínua, não um produto comercial com todos os requisitos de um sistema em produção completo.
 
