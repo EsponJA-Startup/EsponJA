@@ -144,6 +144,9 @@ export default function Register() {
                   className={`form-input ${formData.password && confirmPassword ? (formData.password === confirmPassword ? 'input-success' : 'input-error') : ''}`} 
                   placeholder="Crie uma senha forte" 
                 />
+                <span className="password-requirements">
+                  A senha deve ter no mínimo 8 caracteres, contendo pelo menos uma letra maiúscula, uma minúscula e um número.
+                </span>
               </div>
 
               <div className="form-group">

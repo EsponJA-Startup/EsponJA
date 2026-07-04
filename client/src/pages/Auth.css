@@ -133,3 +133,11 @@
 .password-match-indicator.no-match {
   color: #ef4444;
 }
+
+.password-requirements {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-light, #64748b);
+  margin-top: 0.4rem;
+  line-height: 1.25;
+}
