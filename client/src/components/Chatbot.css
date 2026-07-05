@@ -73,7 +73,7 @@
 }
 
 .chatbot-avatar {
-  background: var(--primary);
+  background: var(--accent);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -86,6 +86,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
+  color: white;
 }
 
 .chatbot-header-text p {
