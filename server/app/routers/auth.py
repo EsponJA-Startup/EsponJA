@@ -30,7 +30,7 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
         raise HTTPException(status_code=400, detail="ID da lista de espera inválido")
         
     waitlist_entry = session.get(Waitlist, w_id)
-    if not waitlist_entry or waitlist_entry.first_access_password != data.first_access_password or waitlist_entry.email != email_lower:
+    if not waitlist_entry or not hmac.compare_digest(waitlist_entry.first_access_password, data.first_access_password) or waitlist_entry.email != email_lower:
         raise HTTPException(status_code=403, detail="Código de confirmação inválido ou não confere.")
         
     if waitlist_entry.is_registered:
@@ -153,7 +153,7 @@ def first_access(request: Request, data: FirstAccessRequest, session: Session = 
     if not waitlist_entry:
         raise HTTPException(status_code=404, detail="Email não encontrado na lista de espera.")
         
-    if waitlist_entry.first_access_password != data.first_access_password:
+    if not hmac.compare_digest(waitlist_entry.first_access_password, data.first_access_password):
         raise HTTPException(status_code=401, detail="Código de confirmação inválido.")
         
     if waitlist_entry.is_registered:

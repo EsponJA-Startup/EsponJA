@@ -29,7 +29,7 @@ async def join_waitlist(request: Request, data: WaitlistRequest, session: Sessio
     if existing_professional:
         raise HTTPException(status_code=400, detail="Email already registered as Professional")
         
-    first_access_pwd = secrets.token_hex(3)
+    first_access_pwd = secrets.token_hex(8)
     
     entry = Waitlist(
         email=email_lower, 
