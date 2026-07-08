@@ -48,8 +48,8 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
             specialty=data.specialty,
-            verification_token=None,
-            email_verified=True,
+            verification_token=email_token,
+            email_verified=False,
             is_verified=False
         )
         session.add(new_user)
@@ -64,8 +64,8 @@ async def register(request: Request, data: RegisterRequest, session: Session = D
             email=email_lower,
             whatsapp_number=data.whatsapp_number,
             password=hashed_pwd,
-            verification_token=None, 
-            email_verified=True
+            verification_token=email_token, 
+            email_verified=False
         )
         session.add(new_user)
         
