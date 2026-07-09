@@ -1,6 +1,6 @@
 # 🧽 EsponJÁ
 
-**Um MVP de marketplace de serviços domésticos, focado em confiança e segurança.**
+**An MVP marketplace for household services, focused on trust and safety.**
 
 ![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
 ![Frontend: React](https://img.shields.io/badge/frontend-React%20%2B%20Vite-61DAFB?logo=react&logoColor=white)
@@ -10,136 +10,138 @@
 
 ---
 
-## Sobre o Projeto
+## About the Project
 
-O EsponJÁ conecta clientes urbanos a profissionais de limpeza **pré-verificados**, substituindo a contratação informal (grupos de WhatsApp, indicação de boca a boca) por um fluxo curado e seguro: identidade verificada, agendamento formal, confirmação ativa e garantia de refação.
+EsponJÁ connects urban customers with **pre-verified** cleaning professionals, replacing informal hiring channels (WhatsApp groups, word-of-mouth referrals) with a curated and secure workflow featuring identity verification, structured scheduling, active confirmation, and service guarantee.
 
-Este repositório contém o MVP completo:
+This repository contains the complete MVP:
 
-- **Frontend**: React + Vite (`/client`)
-- **Backend**: FastAPI + SQLModel (`/server`)
-- **Banco de dados**: PostgreSQL via Neon (produção) / SQLite (desenvolvimento)
-- **Automação de e-mail**: n8n (`/n8n_workflows`, `docker-compose.yml`)
-- **Chatbot de agendamento**: Google Gemini com Function Calling
+- **Frontend:** React + Vite (`/client`)
+- **Backend:** FastAPI + SQLModel (`/server`)
+- **Database:** PostgreSQL via Neon (production) / SQLite (development)
+- **Email Automation:** n8n (`/n8n_workflows`, `docker-compose.yml`)
+- **Scheduling Chatbot:** Google Gemini with Function Calling
 
-Para a documentação técnica completa — arquitetura, modelagem de dados, autenticação e fluxos de negócio, todos com diagramas — veja a **[Wiki do Projeto](#documentação)**.
+For complete technical documentation—including architecture, data modeling, authentication, and business workflows with diagrams—see the **[Project Wiki](#documentation)**.
 
-## 🎓 Contexto Acadêmico
+## 🎓 Academic Context
 
-O EsponJÁ nasceu como projeto da disciplina **PMI3817 – Empreendedorismo e Inovação na Engenharia**, na Universidade de São Paulo, como exercício prático de validação de um modelo de negócio real (MVP, princípios de Lean Startup, Painted Door Test para novas categorias de serviço, etc.).
+EsponJÁ was originally developed as part of the **PMI3817 – Entrepreneurship and Innovation in Engineering** course at the University of São Paulo, serving as a practical exercise in validating a real business model through MVP development, Lean Startup principles, Painted Door Tests for new service categories, and related entrepreneurship methodologies.
 
-A partir daí, o projeto passou a ser utilizado **também** como estudo de caso na disciplina de **MAC0350 - Introdução ao Desenvolvimento de Sistemas de Software**, do Departamento de Ciência da Computação do IME-USP, servindo como exemplo prático de arquitetura full-stack, modelagem de dados e boas práticas de engenharia de software.
+The project later became a **case study** for the **MAC0350 – Introduction to Software Systems Development** course at the Institute of Mathematics and Statistics (IME-USP), where it is used as a practical example of full-stack architecture, data modeling, and modern software engineering practices.
 
-Por isso, algumas decisões de escopo e simplificações no código refletem esse contexto didático — é um MVP acadêmico em evolução contínua, não um produto comercial com todos os requisitos de um sistema em produção completo.
+As a result, some implementation decisions and scope limitations reflect this educational context. EsponJÁ is an academic MVP under continuous evolution rather than a production-ready commercial platform.
 
-## Stack Tecnológico
+## Technology Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Frontend | React 18 + Vite, React Router DOM, Axios, Lucide Icons |
 | Backend | Python 3.11+, FastAPI, SQLModel (SQLAlchemy + Pydantic) |
-| Banco de Dados | PostgreSQL (Neon) em produção / SQLite em desenvolvimento |
-| Autenticação | JWT em cookie `HttpOnly`, hashing de senha com `bcrypt` |
-| Automação | n8n (self-hosted via Docker) + SMTP |
-| IA / Chatbot | Google Gemini (`gemini-2.5-flash`) via `google-genai`, com Function Calling |
-| Hospedagem | Vercel (frontend) + Render (backend) |
-| Testes    | Vitest, React Testing Library, Pytest, HTTPX|
-| CI/CD     | GitHub Actions|
-| Qualidade | Pylint + Radon (Halstead, Complexidade Ciclomática e Maintainability Index) |
-| Licença | AGPL-3.0 |
+| Database | PostgreSQL (Neon) in production / SQLite in development |
+| Authentication | JWT stored in `HttpOnly` cookies, password hashing with `bcrypt` |
+| Automation | Self-hosted n8n via Docker + SMTP |
+| AI / Chatbot | Google Gemini (`gemini-2.5-flash`) via `google-genai` with Function Calling |
+| Hosting | Vercel (frontend) + Render (backend) |
+| Testing | Vitest, React Testing Library, Pytest, HTTPX |
+| CI/CD | GitHub Actions |
+| Code Quality | Pylint + Radon (Halstead Metrics, Cyclomatic Complexity, Maintainability Index) |
+| License | AGPL-3.0 |
 
-## Estrutura do Repositório
+## Repository Structure
 
 ```text
 esponja/
-├── api/                 # Camada serverless (Vercel) que expõe o FastAPI via /api
-├── client/              # Frontend React + Vite
-│   └── src/tests/       # Testes automatizados do frontend (Vitest)
+├── api/                 # Serverless layer (Vercel) exposing FastAPI under /api
+├── client/              # React + Vite frontend
+│   └── src/tests/       # Frontend automated tests (Vitest)
 ├── server/
 │   ├── app/
-│   │   ├── routers/     # Rotas organizadas por domínio
-│   │   ├── schemas.py   # Schemas Pydantic
-│   │   ├── limiter.py   # Configuração centralizada de Rate Limiting
+│   │   ├── routers/     # Domain-based API routes
+│   │   ├── schemas.py   # Pydantic schemas
+│   │   ├── limiter.py   # Centralized Rate Limiting configuration
 │   │   └── ...
-│   └── tests/           # Testes automatizados do backend (Pytest)
-├── metrics/             # Relatórios de métricas de qualidade
+│   └── tests/           # Backend automated tests (Pytest)
+├── metrics/             # Code quality reports
 ├── .github/
-│   └── workflows/       # Pipeline de CI/CD
+│   └── workflows/       # CI/CD pipelines
 ├── n8n_workflows/
 ├── docker-compose.yml
 ├── vercel.json
 └── LICENSE
 ```
 
-## Como Rodar Localmente
+## Running the Project Locally
 
 ```bash
-# 1. Clone o repositório
+# 1. Clone the repository
 git clone https://github.com/EsponJA-Startup/EsponJA.git
 cd EsponJA
 
-# 2. Backend (em um terminal)
+# 2. Backend (Terminal 1)
 cd server
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env          # preencha SECRET_KEY, ADMIN_EMAIL, etc.
+cp .env.example .env          # Configure SECRET_KEY, ADMIN_EMAIL, etc.
 uvicorn main:app --reload --port 8000
 
-# 3. Frontend (em outro terminal)
+# 3. Frontend (Terminal 2)
 cd client
 npm install
 cp .env.example .env
 npm run dev
 
-# 4. (Opcional) Automação de e-mail via n8n, na raiz do projeto
+# 4. (Optional) Email automation via n8n
 docker-compose up -d
-# acesse http://localhost:5678 e importe n8n_workflows/automation_esponja.json
+# Open http://localhost:5678 and import n8n_workflows/automation_esponja.json
 ```
 
-Para detalhes completos de configuração de cada camada (variáveis de ambiente, endpoints, segurança), veja [`server/README.md`](./server/README.md) e [`client/README.md`](./client/README.md).
+For complete setup instructions (environment variables, API endpoints, security configuration, etc.), refer to [`server/README.md`](./server/README.md) and [`client/README.md`](./client/README.md).
 
-## Engenharia de Software
+## Software Engineering
 
-Além da implementação funcional do MVP, o projeto evoluiu para incorporar práticas modernas de engenharia de software voltadas à manutenção, confiabilidade e qualidade do código.
+Beyond implementing the MVP's core functionality, the project has progressively incorporated modern software engineering practices aimed at improving maintainability, reliability, and code quality.
 
-Entre as principais melhorias estão:
+Key improvements include:
 
-arquitetura modular no backend utilizando FastAPI APIRouter e princípios SOLID, reduzindo o acoplamento entre módulos;
-suíte de testes automatizados utilizando Vitest (frontend) e Pytest (backend);
-pipeline de Integração Contínua (CI) com GitHub Actions para validação automática da aplicação;
-monitoramento contínuo de qualidade através de métricas como Halstead, Complexidade Ciclomática, Maintainability Index e Pylint.
+- A modular backend architecture based on **FastAPI APIRouter** and **SOLID principles**, reducing coupling between application modules.
+- An automated testing suite using **Vitest** for the frontend and **Pytest** for the backend.
+- A **Continuous Integration (CI)** pipeline powered by **GitHub Actions**, ensuring all changes are automatically validated before integration.
+- Continuous code quality monitoring through **Halstead Metrics**, **Cyclomatic Complexity**, **Maintainability Index**, and **Pylint**.
 
-Essas melhorias tornam o projeto mais fácil de evoluir, testar e manter, além de servirem como material de estudo para disciplinas relacionadas ao desenvolvimento de software.
+These improvements make the project easier to maintain, extend, and test, while also strengthening its value as an educational software engineering case study.
 
-## Documentação
+## Documentation
 
-A documentação técnica aprofundada está na **Wiki** do repositório:
+The complete technical documentation is available in the project's **Wiki**:
 
-- [Home / Overview](https://github.com/EsponJA-Startup/EsponJA/wiki/Home) — proposta de valor, stack e arquitetura macro
-- [Modelagem de Dados](https://github.com/EsponJA-Startup/EsponJA/wiki/01-Modelagem-de-Dados) — entidades e diagrama ER
-- [Autenticação e Segurança](https://github.com/EsponJA-Startup/EsponJA/wiki/02-Autenticacao-e-Seguranca) — JWT, cookies `HttpOnly`, fluxo de Primeiro Acesso e RBAC
-- [Fluxos de Negócio](https://github.com/EsponJA-Startup/EsponJA/wiki/03-Fluxos-de-Negocio) — agendamento, integração com n8n e chatbot com Gemini
-- [Arquitetura do Backend](https://github.com/EsponJA-Startup/EsponJA/wiki/04-Backend-Architecture) — organização modular com APIRouter e aplicação de princípios SOLID
-- [Testes Automatizados e CI/CD](https://github.com/EsponJA-Startup/EsponJA/wiki/05-Testing-CICD) — estratégia de testes, GitHub Actions e integração contínua
-- [Qualidade de Código](https://github.com/EsponJA-Startup/EsponJA/wiki/06-Metrics-Code-Quality) — métricas, relatórios e acompanhamento da evolução do projeto
+- [Home / Overview](https://github.com/EsponJA-Startup/EsponJA/wiki/Home) — project overview, technology stack, and high-level architecture
+- [Data Modeling](https://github.com/EsponJA-Startup/EsponJA/wiki/01-Modelagem-de-Dados) — entities and ER diagram
+- [Authentication and Security](https://github.com/EsponJA-Startup/EsponJA/wiki/02-Autenticacao-e-Seguranca) — JWT, `HttpOnly` cookies, First Access flow, and RBAC
+- [Business Workflows](https://github.com/EsponJA-Startup/EsponJA/wiki/03-Fluxos-de-Negocio) — scheduling flow, n8n integration, and Gemini chatbot
+- [Backend Architecture](https://github.com/EsponJA-Startup/EsponJA/wiki/04-Backend-Architecture) — modular architecture using APIRouter and SOLID principles
+- [Automated Testing and CI/CD](https://github.com/EsponJA-Startup/EsponJA/wiki/05-Testing-CICD) — testing strategy, GitHub Actions, and continuous integration
+- [Code Quality](https://github.com/EsponJA-Startup/EsponJA/wiki/06-Metrics-Code-Quality) — software quality metrics, reports, and project evolution
 
-## Uso de Inteligência Artificial
+## Use of Artificial Intelligence
 
-Em nome da transparência, registramos que ferramentas de IA foram usadas para assistir praticamente todas as etapas do projeto — desde a escrita de código até o brainstorming de produto e a documentação. O uso dessas ferramentas foi expressamente permitido pelas disciplinas envolvidas.
+In the interest of transparency, we acknowledge that AI tools were used throughout nearly every stage of the project—from software development to product brainstorming and documentation. The use of these tools was explicitly permitted by the academic courses associated with the project.
 
-| Ferramenta | Uso principal |
+| Tool | Primary Use |
 |---|---|
-| **Antigravity** | Principal ferramenta de desenvolvimento assistido por IA para o código do projeto (frontend e backend) |
-| **Google Gemini** | Brainstorming, pesquisa e ideação técnica e de produto |
-| **ChatGPT** | Brainstorming, pesquisa e ideação técnica e de produto |
-| **Agente de IA da disciplina PMI3817** | Orientação nos exercícios de modelagem de negócio exigidos pela disciplina (Lean Startup, CAC, funil de aquisição, pitch) |
-| **Claude (Anthropic)** | Apoio na estruturação da documentação técnica deste repositório (este README e a Wiki) |
+| **Antigravity** | Primary AI-assisted development environment for frontend and backend implementation |
+| **Google Gemini** | Technical research, brainstorming, and product ideation |
+| **ChatGPT** | Technical research, brainstorming, and product ideation |
+| **PMI3817 Course AI Assistant** | Guidance on business modeling activities required by the course (Lean Startup, CAC, acquisition funnel, pitch development) |
+| **Claude (Anthropic)** | Assistance in structuring the technical documentation for this repository (README and Wiki) |
 
-### Nota de Integridade Acadêmica
+### Academic Integrity Statement
 
-O uso de IA foi permitido pelas disciplinas envolvidas e não constitui, portanto, violação de conduta acadêmica. Ainda assim, registramos por transparência que a IA foi empregada como **ferramenta de apoio** — para acelerar brainstorming, geração de código, revisão e documentação — e não como substituta do raciocínio da equipe. Todas as decisões de arquitetura, modelagem de negócio, priorização de funcionalidades e validação técnica foram tomadas e compreendidas pelos integrantes do time, que permanecem responsáveis pelo conteúdo final entregue.
+The use of AI tools was explicitly authorized by the academic courses associated with this project and therefore does not constitute academic misconduct. Nevertheless, we disclose their use in the interest of transparency.
 
-## Licença
+AI served strictly as a **support tool** for brainstorming, code generation, code review, and documentation. All architectural decisions, business modeling, feature prioritization, and technical validation were carried out, reviewed, and fully understood by the development team, who remain solely responsible for the final deliverables.
 
-Este projeto está licenciado sob a **GNU Affero General Public License v3.0 (AGPL-3.0)**. Veja o arquivo [`LICENSE`](./LICENSE) para o texto completo.
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See the [`LICENSE`](./LICENSE) file for the complete license text.
