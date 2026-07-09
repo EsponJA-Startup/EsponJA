@@ -49,14 +49,23 @@ Por isso, algumas decisões de escopo e simplificações no código refletem ess
 
 ```text
 esponja/
-├── api/                # Camada serverless (Vercel) que expõe o FastAPI via /api
-├── client/             # Frontend React + Vite — ver client/README.md
-├── server/             # Backend FastAPI — ver server/README.md
-├── n8n_workflows/      # Workflows exportados do n8n (automação de e-mail)
-├── metrics/            # Relatórios de qualidade de código (complexidade, pylint)
-├── docker-compose.yml  # Sobe n8n + Postgres do n8n localmente
-├── vercel.json         # Configuração de rewrites para deploy na Vercel
-└── LICENSE             # AGPL-3.0
+├── api/                 # Camada serverless (Vercel) que expõe o FastAPI via /api
+├── client/              # Frontend React + Vite
+│   └── src/tests/       # Testes automatizados do frontend (Vitest)
+├── server/
+│   ├── app/
+│   │   ├── routers/     # Rotas organizadas por domínio
+│   │   ├── schemas.py   # Schemas Pydantic
+│   │   ├── limiter.py   # Configuração centralizada de Rate Limiting
+│   │   └── ...
+│   └── tests/           # Testes automatizados do backend (Pytest)
+├── metrics/             # Relatórios de métricas de qualidade
+├── .github/
+│   └── workflows/       # Pipeline de CI/CD
+├── n8n_workflows/
+├── docker-compose.yml
+├── vercel.json
+└── LICENSE
 ```
 
 ## Como Rodar Localmente
