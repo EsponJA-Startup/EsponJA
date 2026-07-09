@@ -117,9 +117,9 @@ These improvements make the project easier to maintain, extend, and test, while 
 The complete technical documentation is available in the project's **Wiki**:
 
 - [Home / Overview](https://github.com/EsponJA-Startup/EsponJA/wiki/Home) — project overview, technology stack, and high-level architecture
-- [Data Modeling](https://github.com/EsponJA-Startup/EsponJA/wiki/01-Modelagem-de-Dados) — entities and ER diagram
-- [Authentication and Security](https://github.com/EsponJA-Startup/EsponJA/wiki/02-Autenticacao-e-Seguranca) — JWT, `HttpOnly` cookies, First Access flow, and RBAC
-- [Business Workflows](https://github.com/EsponJA-Startup/EsponJA/wiki/03-Fluxos-de-Negocio) — scheduling flow, n8n integration, and Gemini chatbot
+- [Data Modeling](https://github.com/EsponJA-Startup/EsponJA/wiki/01-Data-Modeling) — entities and ER diagram
+- [Authentication and Security](https://github.com/EsponJA-Startup/EsponJA/wiki/02-Authentication-and-Security) — JWT, `HttpOnly` cookies, First Access flow, and RBAC
+- [Business Workflows](https://github.com/EsponJA-Startup/EsponJA/wiki/03-Business-Workflows) — scheduling flow, n8n integration, and Gemini chatbot
 - [Backend Architecture](https://github.com/EsponJA-Startup/EsponJA/wiki/04-Backend-Architecture) — modular architecture using APIRouter and SOLID principles
 - [Automated Testing and CI/CD](https://github.com/EsponJA-Startup/EsponJA/wiki/05-Testing-CICD) — testing strategy, GitHub Actions, and continuous integration
 - [Code Quality](https://github.com/EsponJA-Startup/EsponJA/wiki/06-Metrics-Code-Quality) — software quality metrics, reports, and project evolution
