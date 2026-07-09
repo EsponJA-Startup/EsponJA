@@ -43,6 +43,9 @@ Por isso, algumas decisões de escopo e simplificações no código refletem ess
 | Automação | n8n (self-hosted via Docker) + SMTP |
 | IA / Chatbot | Google Gemini (`gemini-2.5-flash`) via `google-genai`, com Function Calling |
 | Hospedagem | Vercel (frontend) + Render (backend) |
+| Testes    | Vitest, React Testing Library, Pytest, HTTPX|
+| CI/CD     | GitHub Actions|
+| Qualidade | Pylint + Radon (Halstead, Complexidade Ciclomática e Maintainability Index) |
 | Licença | AGPL-3.0 |
 
 ## Estrutura do Repositório
@@ -96,6 +99,19 @@ docker-compose up -d
 
 Para detalhes completos de configuração de cada camada (variáveis de ambiente, endpoints, segurança), veja [`server/README.md`](./server/README.md) e [`client/README.md`](./client/README.md).
 
+## Engenharia de Software
+
+Além da implementação funcional do MVP, o projeto evoluiu para incorporar práticas modernas de engenharia de software voltadas à manutenção, confiabilidade e qualidade do código.
+
+Entre as principais melhorias estão:
+
+arquitetura modular no backend utilizando FastAPI APIRouter e princípios SOLID, reduzindo o acoplamento entre módulos;
+suíte de testes automatizados utilizando Vitest (frontend) e Pytest (backend);
+pipeline de Integração Contínua (CI) com GitHub Actions para validação automática da aplicação;
+monitoramento contínuo de qualidade através de métricas como Halstead, Complexidade Ciclomática, Maintainability Index e Pylint.
+
+Essas melhorias tornam o projeto mais fácil de evoluir, testar e manter, além de servirem como material de estudo para disciplinas relacionadas ao desenvolvimento de software.
+
 ## Documentação
 
 A documentação técnica aprofundada está na **Wiki** do repositório:
@@ -104,6 +120,9 @@ A documentação técnica aprofundada está na **Wiki** do repositório:
 - [Modelagem de Dados](https://github.com/EsponJA-Startup/EsponJA/wiki/01-Modelagem-de-Dados) — entidades e diagrama ER
 - [Autenticação e Segurança](https://github.com/EsponJA-Startup/EsponJA/wiki/02-Autenticacao-e-Seguranca) — JWT, cookies `HttpOnly`, fluxo de Primeiro Acesso e RBAC
 - [Fluxos de Negócio](https://github.com/EsponJA-Startup/EsponJA/wiki/03-Fluxos-de-Negocio) — agendamento, integração com n8n e chatbot com Gemini
+- [Arquitetura do Backend](https://github.com/EsponJA-Startup/EsponJA/wiki/04-Backend-Architecture) — organização modular com APIRouter e aplicação de princípios SOLID
+- [Testes Automatizados e CI/CD](https://github.com/EsponJA-Startup/EsponJA/wiki/05-Testing-CICD) — estratégia de testes, GitHub Actions e integração contínua
+- [Qualidade de Código](https://github.com/EsponJA-Startup/EsponJA/wiki/06-Metrics-Code-Quality) — métricas, relatórios e acompanhamento da evolução do projeto
 
 ## Uso de Inteligência Artificial
 
