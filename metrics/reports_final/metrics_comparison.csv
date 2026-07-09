@@ -1,0 +1,13 @@
+metric,attribute,checkpoint_ref,checkpoint_cmp,value_ref,value_cmp,delta_percent
+mi,mi,antiga,atual,67.53567230214182,67.02801884101021,-0.7516819538872214
+hal,effort,antiga,atual,1131.6398877735337,1011.5820870221377,10.609187785666165
+hal,volume,antiga,atual,233.10415646528833,200.37784185557555,14.039352667907517
+hal,difficulty,antiga,atual,1.9324527491408936,1.8599425217072274,3.752238054250067
+raw,lloc,antiga,atual,735.0,1178.0,-60.27210884353742
+raw,sloc,antiga,atual,661.0,1217.0,-84.11497730711044
+raw,loc,antiga,atual,823.0,1507.0,-83.11057108140947
+pylint,score,antiga,atual,6.62,6.83,3.1722054380664644
+pylint,severity_refactor,antiga,atual,7,9,28.57142857142857
+pylint,severity_convention,antiga,atual,137,238,73.72262773722628
+pylint,severity_warning,antiga,atual,30,35,16.666666666666664
+pylint,severity_error,antiga,atual,2,2,0.0
