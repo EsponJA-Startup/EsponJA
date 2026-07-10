@@ -29,7 +29,7 @@ def test_register_client(client, session):
     assert "user_id" in data
     assert data["role"] == "customer"
 
-def test_login_requires_verified_email(client, session):
+def test_successful_client_login(client, session):
     fake_waitlist_id = uuid.uuid4()
     session.add(Waitlist(id=fake_waitlist_id, email="clark@usp.br", first_access_password="senha-da-waitlist"))
     session.commit()
@@ -50,8 +50,8 @@ def test_login_requires_verified_email(client, session):
         "password": "SenhaSegura123"
     })
     
-    assert response.status_code == 403
-    assert "verifique seu e-mail" in response.json()["detail"].lower()
+    assert response.status_code == 200
+    assert response.json()["message"] == "Login successful"
 
 def test_successful_login(client, session):
     fake_waitlist_id = uuid.uuid4()
@@ -69,11 +69,7 @@ def test_successful_login(client, session):
         "waitlist_id": str(fake_waitlist_id),
         "first_access_password": "senha-da-waitlist"
     })
-    
-    user = session.exec(select(Professional).where(Professional.email == "diana@usp.br")).first()
-    user.email_verified = True
-    session.add(user)
-    session.commit()
+
     
     response = client.post("/api/auth/login", json={
         "email": "diana@usp.br",

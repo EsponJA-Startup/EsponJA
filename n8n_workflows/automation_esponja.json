@@ -11,30 +11,32 @@
       "typeVersion": 2.1,
       "position": [
         0,
-        250
+        0
       ],
-      "id": "waitlist-webhook-node-id",
-      "name": "Webhook Waitlist"
+      "id": "e5699afe-bbc3-4bd6-a8a9-a0f2c0d03653",
+      "name": "Webhook",
+      "webhookId": "5e4c96b5-6326-4cc8-89f8-588f3e1381a3"
     },
     {
       "parameters": {
         "fromEmail": "renzofilho2004z@gmail.com",
         "toEmail": "={{ $json.body.email }}",
-        "subject": "=Acesso à lista de espera do EsponJA",
-        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">\n    <h2 style=\"color: #2c3e50; text-align: center;\">Você está na fila do EsponJA! 🧽</h2>\n    <p style=\"color: #555; font-size: 16px;\">Olá!</p>\n    <p style=\"color: #555; font-size: 16px;\">Seu código de confirmação é: <strong>{{ $json.body.first_access_password }}</strong></p>\n    <p style=\"color: #777; font-size: 14px; text-align: center;\">\n        Guarde este código para poder acessar seu convite quando ele for liberado.\n    </p>\n    <hr style=\"border: 0; border-top: 1px solid #eee; margin: 20px 0;\">\n    <p style=\"color: #999; font-size: 12px; text-align: center;\">Equipe EsponJA</p>\n</div>",
+        "subject": "=Bem-vindo ao EsponJA!",
+        "html": "=<p style=\"font-family: Arial, sans-serif; font-size: 16px; color: #333;\"> Olá,<br><br> Temos uma ótima notícia: <strong>seu convite para fazer parte do nosso marketplace foi aprovado</strong>! 🚀<br><br> Estamos muito felizes em tê-lo(a) conosco. Para iniciar sua jornada por aqui, disponibilizamos um código de acesso exclusivo e temporário. </p><div style=\"background-color: #f4f7fc; padding: 20px; border-radius: 8px; border-left: 5px solid #4CAF50; font-family: Arial, sans-serif; margin: 20px 0;\"> <p style=\"margin: 0; font-size: 14px; color: #555;\"> <strong>🔑 Seu Código de Primeiro Acesso:</strong> </p> <p style=\"font-size: 24px; font-weight: bold; color: #1a73e8; margin: 8px 0 0 0; letter-spacing: 2px;\"> {{ $json.body.first_access_password }} </p> </div><p style=\"font-family: Arial, sans-serif; font-size: 16px; color: #333;\"> Agora é simples: <br> ➡️ Acesse o <a href=\"https://esponja-nu.vercel.app/\" style=\"color: #1a73e8; text-decoration: none; font-weight: bold;\">nosso site aqui</a><br> ➡️ Informe seu <strong>e-mail</strong> e o <strong>código acima</strong><br> ➡️ Pronto! Você poderá finalizar seu cadastro e começar a usar nossa plataforma. </p><p style=\"font-family: Arial, sans-serif; font-size: 16px; color: #333;\"> Caso tenha dúvidas, nossa equipe está à disposição para ajudar. 💬<br><br> Bem-vindo(a) a bordo!<br><br> <strong>Equipe EsponJA</strong> </p><hr style=\"border: none; border-top: 1px solid #ddd; margin: 30px 0 10px;\"> <p style=\"font-size: 12px; color: #999; font-family: Arial, sans-serif;\"> Este e-mail é automático. Por favor, não responda diretamente a esta mensagem. </p>",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
         208,
-        250
+        0
       ],
-      "id": "waitlist-email-node-id",
-      "name": "Send Waitlist Email",
+      "id": "fe85f228-05c2-41cd-958a-089171a33435",
+      "name": "Send an Email",
+      "webhookId": "8051468f-98a9-45ee-aa5c-cf0a3140a53e",
       "credentials": {
         "smtp": {
-          "id": "AOkKKXQ9evhzgr63",
+          "id": "hki6gIeTG16Tx9NG",
           "name": "SMTP account"
         }
       }
@@ -42,11 +44,11 @@
   ],
   "pinData": {},
   "connections": {
-    "Webhook Waitlist": {
+    "Webhook": {
       "main": [
         [
           {
-            "node": "Send Waitlist Email",
+            "node": "Send an Email",
             "type": "main",
             "index": 0
           }
@@ -57,13 +59,15 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
-  "versionId": "c9464c78-3bee-4ebc-9b11-4aee86fe8a32",
+  "versionId": "94ea6c6d-af09-43a4-b84b-0d0faa3a9734",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "844b8080ba9b8c5b4dc7c3fdbebc0b0146519f97cbad1d1363709104c70f6b15"
+    "instanceId": "366cfe4d11a7e7e77425d7aa2860be0219475f9bbab721d365608b4f83a5007e"
   },
-  "id": "449Rkgzubij4miJ6",
+  "nodeGroups": [],
+  "id": "LZJUC4gAOTSkBEU4",
   "tags": []
 }
